@@ -197,24 +197,24 @@ var TYPE={sync:{c:'#3ecf8e',dash:'10 4',dur:'1.5s',label:'同步'},
  data:{c:'#b18cff',dash:'14 5',dur:'1.9s',label:'读取'}};
 var COLS=[['web'],['app'],['data','ops']];
 var SERVERS=[
- {id:'web',short:'Web',name:'Web 边缘',meta:'',ac:'#58a6ff',svc:[
-   {id:'nginx',short:'nginx',name:'nginx',subs:[
-     {id:'proxy',short:'反代',name:'反代层'},
-     {id:'static',short:'静态',name:'静态资源'}]},
-   {id:'gw',short:'网关',name:'API 网关'}]},
- {id:'app',short:'App',name:'应用服务器',meta:'',ac:'#39d0c4',svc:[
+ {id:'web',short:'Web',name:'Web 边缘',meta:'双活 · LAN',ac:'#58a6ff',svc:[
+   {id:'nginx',short:'nginx',name:'nginx',meta:'80/443',subs:[
+     {id:'proxy',short:'反代',name:'反代层',meta:'TLS 终结'},
+     {id:'static',short:'静态',name:'静态资源',meta:'缓存 7d'}]},
+   {id:'gw',short:'网关',name:'API 网关',meta:'QPS 3k'}]},
+ {id:'app',short:'App',name:'应用服务器',meta:'4C8G ×2',ac:'#39d0c4',svc:[
    {id:'orders',short:'订单',name:'订单服务',subs:[
-     {id:'create',short:'下单',name:'下单'},
+     {id:'create',short:'下单',name:'下单',meta:'事务'},
      {id:'reserve',short:'扣减',name:'库存扣减'}]},
-   {id:'users',short:'用户',name:'用户服务'}]},
- {id:'data',short:'Data',name:'数据层',meta:'',ac:'#b18cff',svc:[
-   {id:'pg',short:'PG主库',name:'PostgreSQL 主库'},
-   {id:'replica',short:'副本',name:'只读副本'}]},
- {id:'ops',short:'Ops',name:'运维',meta:'',ac:'#f0a942',svc:[
-   {id:'cron',short:'cron',name:'cron 定时器',subs:[
+   {id:'users',short:'用户',name:'用户服务',meta:'JWT'}]},
+ {id:'data',short:'Data',name:'数据层',meta:'SSD RAID',ac:'#b18cff',svc:[
+   {id:'pg',short:'PG主库',name:'PostgreSQL 主库',meta:'5432'},
+   {id:'replica',short:'副本',name:'只读副本',meta:'延迟 <5s'}]},
+ {id:'ops',short:'Ops',name:'运维',meta:'跳板机',ac:'#f0a942',svc:[
+   {id:'cron',short:'cron',name:'cron 定时器',meta:'~10 任务',subs:[
      {id:'recon',short:'对账',name:'夜批对账',meta:'02:00'},
      {id:'report',short:'报表',name:'报表推送',meta:'08:00'}]},
-   {id:'bi',short:'BI',name:'BI 看板'}]}
+   {id:'bi',short:'BI',name:'BI 看板',meta:'9001'}]}
 ];
 var EDGES=[
  {from:'web.nginx.proxy',to:'web.gw',type:'call',sched:'实时'},
@@ -222,10 +222,10 @@ var EDGES=[
  {from:'web.gw',to:'app.users',type:'call',sched:'实时'},
  {from:'app.orders.create',to:'data.pg',type:'call',sched:'下单写入'},
  {from:'app.orders.reserve',to:'data.pg',type:'call',sched:'实时'},
- {from:'data.pg',to:'data.replica',type:'sync',sched:'流复制'},
- {from:'ops.cron.recon',to:'data.pg',type:'job',sched:'02:00'},
- {from:'ops.cron.report',to:'data.replica',type:'job',sched:'08:00'},
- {from:'ops.bi',to:'data.replica',type:'data',sched:'只读'}
+ {from:'data.pg',to:'data.replica',type:'sync',sched:'流复制 · 实时'},
+ {from:'ops.cron.recon',to:'data.pg',type:'job',sched:'02:00 · 每日'},
+ {from:'ops.cron.report',to:'data.replica',type:'job',sched:'08:00 · 工作日'},
+ {from:'ops.bi',to:'data.replica',type:'data',sched:'只读 · 5min 延迟'}
 ];
 /*==DATA-END==*/
 
