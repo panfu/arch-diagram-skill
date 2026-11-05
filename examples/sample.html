@@ -104,6 +104,10 @@ border-left:1px dotted #33405e;margin-left:5px;padding-left:9px;transition:color
 padding:0 7px;color:var(--teal);font-size:10.5px;border:1px solid var(--line);border-radius:4px}
 #svcarch .elist{display:flex;flex-direction:column;gap:2px;max-height:238px;overflow-y:auto;scrollbar-width:none}
 #svcarch .elist::-webkit-scrollbar{display:none}
+#svcarch .emore{position:absolute;left:1px;right:1px;bottom:3px;text-align:center;
+color:#7d8fb8;font-size:10.5px;line-height:1;padding:9px 0 2px;pointer-events:none;
+background:linear-gradient(180deg,rgba(14,19,32,0),#0e1320 60%);opacity:0;transition:opacity .2s}
+#svcarch .emore.on{opacity:1}
 #svcarch .erow{display:flex;align-items:center;gap:7px;padding:2.5px 5px;border-radius:5px;color:var(--dim);font-size:11px;border:1px solid transparent}
 #svcarch .erow:hover,#svcarch .erow.hot{background:rgba(255,255,255,.05);color:var(--ink)}
 #svcarch .erow.pin{border-color:color-mix(in srgb,var(--c) 60%,transparent)}
@@ -163,7 +167,7 @@ padding:0 7px;color:var(--teal);font-size:10.5px;border:1px solid var(--line);bo
         </div>
       </div>
       <aside class="rail">
-        <div class="panel"><span class="ptab">edge log · 当前粒度</span><div class="elist" id="svcelist" aria-live="polite"></div></div>
+        <div class="panel"><span class="ptab">edge log · 当前粒度</span><div class="elist" id="svcelist" aria-live="polite"></div><div class="emore" id="svcemore" aria-hidden="true">▾</div></div>
         <div class="panel"><span class="ptab">inspector</span><div class="insp" id="svcinsp">hover 边或列表行 · click 固定明细</div></div>
         <div class="panel"><span class="ptab">session log</span><div class="alog" id="svcalog" aria-live="polite"></div></div>
       </aside>
@@ -182,6 +186,8 @@ var svg=document.getElementById('svcwires');
 var svgHit=document.getElementById('svcwireshit');
 var svgTop=document.getElementById('svcwirestop');
 var elistEl=document.getElementById('svcelist');
+var emore=document.getElementById('svcemore');
+elistEl.addEventListener('scroll',function(){updateEmore()},{passive:true});
 var inspEl=document.getElementById('svcinsp');
 var alogEl=document.getElementById('svcalog');
 var chipsEl=document.getElementById('svcchips');
@@ -525,6 +531,12 @@ function renderRail(groups){
     row.querySelector('.ec').textContent=g.type+' ×'+g.leaves.length;
     elistEl.appendChild(row);
   });
+  updateEmore();
+}
+function updateEmore(){
+  if(!emore||!elistEl)return;
+  var more=elistEl.scrollHeight-elistEl.clientHeight>2&&elistEl.scrollTop+elistEl.clientHeight<elistEl.scrollHeight-6;
+  emore.classList.toggle('on',more);
 }
 function renderBadges(groups){
   var anchorCount={};
