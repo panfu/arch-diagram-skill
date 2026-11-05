@@ -130,6 +130,13 @@ background:linear-gradient(180deg,rgba(14,19,32,0),#0e1320 60%);opacity:0;transi
   #svcarch .rail{width:100%;flex-direction:row;flex-wrap:wrap}
   #svcarch .rail .panel{flex:1;min-width:250px}
 }
+#svcarch .segs{display:inline-flex;gap:4px}
+#svcarch .seg{padding:2px 10px;border:1px solid #263049;border-radius:999px;font:inherit;font-size:10.5px;color:var(--dim);background:none}
+#svcarch .seg.on{border-color:currentColor;background:rgba(255,255,255,.05)}
+#svcarch .emrow{padding:3px 6px;border-radius:5px;color:var(--dim);font-size:11px}
+#svcarch .emrow.on{background:rgba(255,255,255,.07);color:var(--ink)}
+#svcarch #svcemlist{display:flex;flex-direction:column;gap:2px;margin-bottom:8px;max-height:120px;overflow:auto;scrollbar-width:none}
+#svcarch #svcemlist::-webkit-scrollbar{display:none}
 #svcarch .editbtn{display:none}
 #svcarch.alt-on .editbtn{display:inline-block}
 #svcarch .modal{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center}
@@ -177,7 +184,7 @@ background:linear-gradient(180deg,rgba(14,19,32,0),#0e1320 60%);opacity:0;transi
           <button class="vbtn cursor-interaction" data-view="servers" type="button" aria-pressed="false">▾ servers</button>
           <button class="vbtn cursor-interaction" data-view="services" type="button" aria-pressed="true">▪ services</button>
           <button class="vbtn cursor-interaction" data-view="leaves" type="button" aria-pressed="false">▸ leaves</button>
-          <button class="vbtn cursor-interaction editbtn" data-view="edit" type="button">✎ edit</button>
+          <button class="vbtn cursor-interaction editbtn" data-view="export" type="button">⇱ export</button>
         </span>
       </div>
     </header>
@@ -220,6 +227,21 @@ background:linear-gradient(180deg,rgba(14,19,32,0),#0e1320 60%);opacity:0;transi
       <span class="mspacer"></span>
       <button class="mbtn" id="svcmcancel" type="button">取消</button>
       <button class="mbtn primary" id="svcmok" type="button">保存</button>
+    </div>
+  </div>
+</div>
+<div class="modal" id="svcedgemodal" hidden>
+  <div class="mback" data-close="1"></div>
+  <div class="mbox" role="dialog" aria-modal="true" aria-label="编辑连线">
+    <div class="mtitle" id="svcemtitle">编辑 · 连线</div>
+    <div id="svcemlist"></div>
+    <div class="mrow"><label>类型</label><span class="segs" id="svcemtypes"></span></div>
+    <div class="mrow"><label for="svcemsched">时刻</label><input class="minput" id="svcemsched" maxlength="60" placeholder="如 02:00 · 每日"></div>
+    <div class="mfoot">
+      <button class="mbtn danger" id="svcemdel" type="button">✕ 删除此边</button>
+      <span class="mspacer"></span>
+      <button class="mbtn" id="svcemcancel" type="button">取消</button>
+      <button class="mbtn primary" id="svcemok" type="button">保存</button>
     </div>
   </div>
 </div>
@@ -750,6 +772,10 @@ function logLine(html){
 /* ── 事件 ─────────────────────────────────────────────────── */
 colsEl.addEventListener('click',function(ev){
   if(justDragged){justDragged=false;return}
+  if(ev.altKey){
+    var e=ev.target.closest('.srv-head,.svc-head,.sub');
+    if(e&&e.dataset.node&&!ev.target.closest('.grip')&&!ev.target.closest('.rsz')){openNodeEditor(e.dataset.node);return}
+  }
   var b=ev.target.closest('button[data-node]');
   if(b)toggle(b.dataset.node);
 });
@@ -826,13 +852,14 @@ svgHit.addEventListener('mouseout',function(ev){
 svgHit.addEventListener('click',function(ev){
   if(ev.target.classList&&ev.target.classList.contains('hit')){
     var k=ev.target.getAttribute('data-key');
+    if(ev.altKey){openEdgeEditor(k);return}
     pinnedKey=(pinnedKey===k)?null:k;
     applyPinStyles();renderInspector(k);
   }
 });
 root.querySelectorAll('.vbtn').forEach(function(b){
   b.addEventListener('click',function(){
-    if(b.dataset.view==='edit'){openMermaidDialog();return}
+    if(b.dataset.view==='export'){openMermaidDialog();return}
     setView(b.dataset.view);
   });
 });
@@ -979,6 +1006,9 @@ function renderSwatches(ac){
   });
   try{$('svcmcolor').value=/^#[0-9a-f]{6}$/i.test(ac||'')?ac:'#39d0c4'}catch(e){}
 }
+$('svcmcolor').addEventListener('input',function(){
+  $('svcmsw').querySelectorAll('.swb').forEach(function(x){x.classList.remove('on')});
+});
 function openNodeEditor(path){
   var rec=findRec(path);if(!rec)return;
   editing={path:path,rec:rec};delArmed=false;
@@ -993,12 +1023,6 @@ function openNodeEditor(path){
   showModal('svcmodal');
   setTimeout(function(){try{$('svcmname').focus()}catch(e){}},30);
 }
-colsEl.addEventListener('dblclick',function(ev){
-  if(!ev.altKey)return;
-  if(ev.target.closest('.grip')||ev.target.closest('.rsz'))return;
-  var h=ev.target.closest('.srv-head,.svc-head,.sub');
-  if(h&&h.dataset.node)openNodeEditor(h.dataset.node);
-});
 function afterDataChange(){
   SERVERS=DATA.servers;EDGES=DATA.edges;COLS=DATA.cols||COLS;
   var mx=0;Object.keys(POS).forEach(function(k){var p=POS[k];if(p)mx=Math.max(mx,p.x+p.w)});
@@ -1138,6 +1162,66 @@ $('svcmeditreset').addEventListener('click',function(){
   try{localStorage.removeItem(LSKEY)}catch(e){}
   if(window.zcode&&window.zcode.setWidgetState){try{window.zcode.setWidgetState({privateContent:null})}catch(e){}}
   location.reload();
+});
+
+var edgeEdit=null;
+function openEdgeEditor(key){
+  var w=null;
+  for(var i=0;i<WIRES.length;i++)if(WIRES[i].key===key){w=WIRES[i];break}
+  if(!w)return;
+  var leaves=w.g.leaves.map(function(e){return {e:e,idx:DATA.edges.indexOf(e)}}).filter(function(x){return x.idx>=0});
+  if(!leaves.length)return;
+  edgeEdit={leaves:leaves,sel:0};
+  $('svcemtitle').textContent='编辑 · '+shortPath(w.g.s)+' ▶ '+shortPath(w.g.t);
+  var list=$('svcemlist');
+  list.innerHTML='';
+  list.hidden=leaves.length<2;
+  leaves.forEach(function(x,i){
+    var r=el('div','emrow cursor-interaction');
+    r.textContent=shortPath(x.e.from)+' ▶ '+shortPath(x.e.to);
+    r.addEventListener('click',function(){edgeEdit.sel=i;refreshEdgeForm()});
+    list.appendChild(r);
+  });
+  refreshEdgeForm();
+  showModal('svcedgemodal');
+}
+function refreshEdgeForm(){
+  if(!edgeEdit)return;
+  var rows=$('svcemlist').querySelectorAll('.emrow');
+  for(var i=0;i<rows.length;i++)rows[i].classList.toggle('on',i===edgeEdit.sel);
+  var x=edgeEdit.leaves[edgeEdit.sel];
+  $('svcemsched').value=x.e.sched||'';
+  var box=$('svcemtypes');box.innerHTML='';
+  Object.keys(TYPE).forEach(function(ty){
+    var b=el('button','seg cursor-interaction');b.type='button';
+    b.textContent=TYPE[ty].label;b.setAttribute('data-t',ty);
+    b.style.color=TYPE[ty].c;
+    if(ty===x.e.type)b.classList.add('on');
+    b.addEventListener('click',function(){
+      box.querySelectorAll('.seg').forEach(function(y){y.classList.remove('on')});
+      b.classList.add('on');
+    });
+    box.appendChild(b);
+  });
+}
+$('svcemok').addEventListener('click',function(){
+  if(!edgeEdit)return;
+  var x=edgeEdit.leaves[edgeEdit.sel];
+  var on=$('svcemtypes').querySelector('.seg.on');
+  var ty=on?on.getAttribute('data-t'):x.e.type;
+  x.e.type=ty;
+  x.e.sched=($('svcemsched').value||'').trim();
+  var a=shortPath(x.e.from),b2=shortPath(x.e.to);
+  afterDataChange();hideModal('svcedgemodal');edgeEdit=null;
+  logLine('<span style="color:var(--teal)">✎ edge</span> '+a+' ▶ '+b2+' 已更新');
+});
+$('svcemcancel').addEventListener('click',function(){hideModal('svcedgemodal');edgeEdit=null});
+$('svcemdel').addEventListener('click',function(){
+  if(!edgeEdit)return;
+  var x=edgeEdit.leaves[edgeEdit.sel];
+  DATA.edges.splice(x.idx,1);
+  afterDataChange();hideModal('svcedgemodal');edgeEdit=null;
+  logLine('<span style="color:#ff8a9b">✕ edge</span> 已删除 1 条调度边');
 });
 
 /* ── 启动 ─────────────────────────────────────────────────── */

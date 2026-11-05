@@ -108,4 +108,4 @@ var EDGES=[
 ## 生成后的 HTML 自带能力（不要在模板外重复实现）
 
 拖拽移动（框顶把手，按住 Alt 全显）、右缘调宽、收合上浮、三种粒度预设（servers/services/leaves）、edge log / inspector / session log、布局与收合状态存 localStorage（键 = ARCH_LSKEY）。
-- 内置编辑：按住 Alt 双击任意节点头部（三层均可）改名称/备注/服务器框色、新增下属、删除（两段确认，级联子树与边）；Alt 按住时右上出现 ✎ edit，弹窗展示最新状态的 Mermaid（语法高亮 + 复制），内含 ⟲ relayout 与 ↺ 恢复默认数据。编辑结果随 localStorage 持久化。
+- 内置编辑：按住 Alt 单击任意节点头部（三层均可）改名称/备注/服务器框色、新增下属、删除（两段确认，级联子树与边）；Alt 单击连线可改类型/时刻或删边；Alt 按住时右上出现 ⇱ export，弹窗展示最新状态的 Mermaid（语法高亮 + 复制），内含 ⟲ relayout 与 ↺ 恢复默认数据。编辑结果随 localStorage 持久化。
