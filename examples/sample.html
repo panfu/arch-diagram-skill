@@ -45,6 +45,14 @@ cursor:grab;touch-action:none;opacity:0;pointer-events:none;transition:opacity .
 
 #svcarch .main{display:flex;gap:14px;margin-top:12px;align-items:flex-start}
 #svcarch .graph-wrap{flex:1;min-width:0;overflow-x:auto;padding:2px}
+#svcarch .graph-wrap{scrollbar-color:#2a3448 transparent}
+#svcarch .graph-wrap::-webkit-scrollbar{height:10px}
+#svcarch .graph-wrap::-webkit-scrollbar-track{background:transparent}
+#svcarch .graph-wrap::-webkit-scrollbar-thumb{background:#2a3448;border-radius:5px}
+#svcarch .graph-wrap::-webkit-scrollbar-thumb:hover{background:#3a4a6b}
+#svcarch .mbox,#svcarch .mmd{scrollbar-color:#2a3448 transparent}
+#svcarch .mbox::-webkit-scrollbar,#svcarch .mmd::-webkit-scrollbar{width:8px;height:8px}
+#svcarch .mbox::-webkit-scrollbar-thumb,#svcarch .mmd::-webkit-scrollbar-thumb{background:#2a3448;border-radius:4px}
 #svcarch .graph{position:relative;min-width:940px;padding:24px 26px 28px 10px;border-radius:10px;
 background-image:radial-gradient(#161d2c 1px,transparent 1px);background-size:22px 22px}
 #svcarch .cols{position:relative;z-index:2;pointer-events:none}
@@ -197,7 +205,7 @@ background:linear-gradient(180deg,rgba(14,19,32,0),#0e1320 60%);opacity:0;transi
         </div>
       </div>
       <aside class="rail">
-        <div class="panel"><span class="ptab">edge log</span><div class="elist" id="svcelist" aria-live="polite"></div><div class="emore" id="svcemore" aria-hidden="true">▾</div></div>
+        <div class="panel"><span class="ptab">edges</span><div class="elist" id="svcelist" aria-live="polite"></div><div class="emore" id="svcemore" aria-hidden="true">▾</div></div>
         <div class="panel"><span class="ptab">inspector</span><div class="insp" id="svcinsp">hover a wire or row · click to pin</div></div>
       </aside>
     </div>
