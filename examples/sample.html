@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SERVICE ARCH</title>
+<style>body{margin:12px;background:#080b12}</style>
+</head>
+<body>
+<div id="svcarch">
+<style>
+#svcarch{--tbg:#0d1119;--panel:#111726;--panel2:#0e1320;--ink:#d6deeb;--dim:#8b95a9;--faint:#5d6678;
+--line:#232b3d;--teal:#39d0c4;--blue:#58a6ff;--green:#3ecf8e;--purple:#b18cff;--orange:#f0a942;
+font-family:ui-monospace,'SF Mono','JetBrains Mono',Menlo,Consolas,monospace;font-size:12px;line-height:1.5;
+color:var(--ink);font-weight:400;-webkit-font-smoothing:antialiased;user-select:none}
+#svcarch *{box-sizing:border-box;margin:0;padding:0}
+#svcarch button{font:inherit;color:inherit;background:none;border:0;text-align:left;cursor:pointer}
+#svcarch .cursor-interaction{cursor:pointer}
+#svcarch .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+#svcarch .term{background:var(--tbg);border:1px solid #1d2434;border-radius:10px;overflow:hidden;
+box-shadow:0 14px 40px rgba(0,0,0,.45)}
+#svcarch .tbar{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#0a0e17;border-bottom:1px solid #1a2130}
+#svcarch .lt{width:12px;height:12px;border-radius:50%}
+#svcarch .lt.r{background:#ff5f57}#svcarch .lt.y{background:#febc2e}#svcarch .lt.g{background:#28c840}
+#svcarch .ttitle{flex:1;text-align:center;color:var(--faint);font-size:11px}
+#svcarch .tbody{padding:16px 18px 14px}
+
+#svcarch .c-dim{color:var(--faint)}
+#svcarch .lrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+#svcarch .lg{display:inline-flex;align-items:center;gap:5px;color:var(--dim);font-size:11px}
+#svcarch .sw{width:14px;height:5px;border-radius:2px;background:var(--c);display:inline-block}
+#svcarch .spacer{flex:1}
+#svcarch .views{display:inline-flex;gap:6px}
+#svcarch .vbtn{padding:2px 9px;border:1px solid var(--line);border-radius:6px;color:var(--dim);font-size:11px}
+#svcarch .vbtn:hover{border-color:#3a4a6b;color:var(--ink)}
+#svcarch .vbtn.on{border-color:var(--teal);color:var(--teal)}
+#svcarch .grip{position:absolute;top:-17px;left:50%;transform:translateX(-50%);
+display:inline-flex;align-items:center;justify-content:center;
+color:#4a5878;font-size:11px;letter-spacing:3px;line-height:1;
+cursor:grab;touch-action:none;opacity:0;pointer-events:none;transition:opacity .25s .22s}
+#svcarch .grip::after{content:'';position:absolute;left:-14px;right:-14px;top:-8px;bottom:-9px}
+#svcarch .server:hover .grip,#svcarch.alt-on .grip{opacity:1;pointer-events:auto;color:#7d8fb8;transition:opacity .1s 0s}
+#svcarch .server.dragging .grip{opacity:1;pointer-events:auto;cursor:grabbing;color:var(--ac);transition:opacity .1s 0s}
+
+#svcarch .main{display:flex;gap:14px;margin-top:12px;align-items:flex-start}
+#svcarch .graph-wrap{flex:1;min-width:0;overflow-x:auto;padding:2px}
+#svcarch .graph{position:relative;min-width:940px;padding:24px 26px 28px 10px;border-radius:10px;
+background-image:radial-gradient(#161d2c 1px,transparent 1px);background-size:22px 22px}
+#svcarch .cols{position:relative;z-index:2;pointer-events:none}
+
+#svcarch .cols .server{pointer-events:auto}
+#svcarch .server{position:absolute;background:#111726;border:1px dashed color-mix(in srgb,var(--ac) 38%,transparent);
+border-radius:10px;padding:8px;transition:opacity .2s,box-shadow .2s,border-color .2s}
+#svcarch .server.dragging{z-index:6;box-shadow:0 18px 44px rgba(0,0,0,.55)}
+#svcarch .server.hot{border-color:var(--ac);box-shadow:0 0 0 1px color-mix(in srgb,var(--ac) 45%,transparent),0 0 18px color-mix(in srgb,var(--ac) 22%,transparent)}
+#svcarch .dimmed{opacity:.34;filter:saturate(.5)}
+#svcarch .srv-head{display:flex;align-items:center;gap:6px;width:100%;padding:3px 4px;border-radius:5px}
+#svcarch .srv-head:hover{background:rgba(255,255,255,.04)}
+#svcarch .tri{color:var(--ac);width:11px;flex:none;font-size:10.5px}
+#svcarch .srv-name{font-weight:500;color:var(--ac);font-size:12px;flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+#svcarch .srv-meta{color:var(--faint);font-size:10.5px;margin-left:2px}
+#svcarch .badge{margin-left:auto;color:var(--faint);font-size:10.5px;white-space:nowrap}
+#svcarch .badge b{color:var(--orange);font-weight:400}
+#svcarch .rsz{position:absolute;top:10px;bottom:10px;right:-4px;width:9px;cursor:ew-resize;touch-action:none}
+#svcarch .rsz::after{content:'';position:absolute;top:0;bottom:0;right:4px;width:2px;border-radius:1px;background:transparent}
+#svcarch .server:hover .rsz::after{background:color-mix(in srgb,var(--ac) 60%,transparent)}
+
+#svcarch .svc-wrap,.sub-wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s ease}
+#svcarch .open>.svc-wrap,#svcarch .svc.open>.sub-wrap{grid-template-rows:1fr}
+#svcarch .svc-inner,.sub-inner{overflow:hidden;min-height:0}
+#svcarch .svc-inner{display:flex;flex-direction:column;gap:7px;padding:7px 2px 3px}
+#svcarch .svc{background:#0f1524;border:1px solid #263049;border-radius:8px;padding:5px 7px;transition:opacity .2s,border-color .2s,box-shadow .2s}
+#svcarch .svc.has-subs{border-left:2px solid color-mix(in srgb,var(--ac) 55%,transparent)}
+#svcarch .svc.hot{border-color:var(--ac);box-shadow:0 0 12px color-mix(in srgb,var(--ac) 20%,transparent)}
+#svcarch .svc-head{display:flex;align-items:center;gap:6px;width:100%;padding:1px 0;flex-wrap:wrap}
+#svcarch .svc-name{color:var(--ink);font-size:11.5px;flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+#svcarch .svc-meta{color:var(--faint);font-size:10.5px}
+#svcarch .sub-inner{display:flex;flex-direction:column;padding:2px 0 3px 4px}
+#svcarch .sub{display:flex;align-items:center;gap:6px;color:var(--dim);font-size:11px;padding:1.5px 3px;
+border-left:1px dotted #33405e;margin-left:5px;padding-left:9px;transition:color .15s,opacity .2s}
+#svcarch .sub:hover,#svcarch .sub.hot{color:var(--ink)}
+#svcarch .tick{color:#3a4763;flex:none}
+#svcarch .sub-meta{color:var(--faint);font-size:10.5px;margin-left:auto}
+
+#svcarch .wires-hit{position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:1}
+#svcarch .wires{position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:3}
+#svcarch .wires-top{position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:4}
+#svcarch .wire{fill:none;stroke-width:1.4;opacity:.72;animation:wflow var(--wdur,1.2s) linear infinite}
+#svcarch .wire.hot{opacity:1;stroke-width:2;filter:drop-shadow(0 0 4px currentColor)}
+#svcarch .graph.focus .wire:not(.hot){opacity:.1}
+#svcarch .graph.focus .flowdot:not(.hot){opacity:.08}
+#svcarch .graph.focus .wbt:not(.hot){opacity:.18}
+#svcarch .hit{fill:none;stroke:transparent;stroke-width:13;pointer-events:stroke;cursor:pointer}
+#svcarch .wbt{font-size:10.5px;font-weight:500;fill:var(--dim);stroke:#0d1119;stroke-width:3px;paint-order:stroke}
+#svcarch .wbt.hot{fill:var(--ink)}
+#svcarch .flowdot{opacity:.9;pointer-events:none}
+@keyframes wflow{to{stroke-dashoffset:-28}}
+@media (prefers-reduced-motion:reduce){#svcarch .wire{animation:none}}
+
+#svcarch .rail{width:288px;flex:none;display:flex;flex-direction:column;gap:14px}
+#svcarch .panel{position:relative;border:1px solid var(--line);border-radius:8px;background:var(--panel2);padding:14px 10px 8px;margin-top:7px}
+#svcarch .ptab{position:absolute;top:0;left:10px;transform:translateY(-55%);background:var(--panel2);
+padding:0 7px;color:var(--teal);font-size:10.5px;border:1px solid var(--line);border-radius:4px}
+#svcarch .elist{display:flex;flex-direction:column;gap:2px}
+#svcarch .erow{display:flex;align-items:center;gap:7px;padding:2.5px 5px;border-radius:5px;color:var(--dim);font-size:11px;border:1px solid transparent}
+#svcarch .erow:hover,#svcarch .erow.hot{background:rgba(255,255,255,.05);color:var(--ink)}
+#svcarch .erow.pin{border-color:color-mix(in srgb,var(--c) 60%,transparent)}
+#svcarch .ed{width:14px;height:5px;border-radius:2px;background:var(--c);flex:none}
+#svcarch .ep{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#svcarch .ec{margin-left:auto;color:var(--faint);font-size:10.5px;white-space:nowrap}
+#svcarch .insp{color:var(--dim);font-size:11px;min-height:64px}
+#svcarch .ihead{color:var(--ink);margin-bottom:6px}
+#svcarch .ileaf{color:var(--dim);padding-left:2px}
+#svcarch .ileaf b{color:var(--c);font-weight:400}
+#svcarch .inote{margin-top:6px;color:var(--faint);font-size:10.5px}
+#svcarch .iclear{color:var(--faint);font-size:10.5px;text-decoration:underline;margin-top:6px;display:inline-block}
+#svcarch .iclear:hover{color:var(--ink)}
+#svcarch .alog{display:flex;flex-direction:column;gap:2px;color:var(--dim);font-size:10.5px}
+#svcarch .alog .al:nth-child(n+4){opacity:.5}
+#svcarch .alog .al:nth-child(n+7){opacity:.28}
+
+@media (max-width:1060px){
+  #svcarch .main{flex-direction:column}
+  #svcarch .rail{width:100%;flex-direction:row;flex-wrap:wrap}
+  #svcarch .rail .panel{flex:1;min-width:250px}
+}
+</style>
+
+<p class="sr-only" id="svcsummary"></p>
+<div class="term">
+  <div class="tbar">
+    <span class="lt r"></span><span class="lt y"></span><span class="lt g"></span>
+    <span class="ttitle" id="svctitle">AR SERVICE ARCH</span>
+  </div>
+  <div class="tbody">
+    <header>
+      <div class="lrow">
+        <span class="lg"><i class="sw" style="--c:#3ecf8e"></i>sync 同步</span>
+        <span class="lg"><i class="sw" style="--c:#58a6ff"></i>call 调用</span>
+        <span class="lg"><i class="sw" style="--c:#f0a942"></i>job 定时</span>
+        <span class="lg"><i class="sw" style="--c:#b18cff"></i>data 读取</span>
+        <span class="lg"><i class="sw" style="--c:#4a5468"></i>internal 同宿主</span>
+        <span class="spacer"></span>
+        <span class="views">
+          <button class="vbtn cursor-interaction" data-view="servers" type="button" aria-pressed="false">▾ servers</button>
+          <button class="vbtn cursor-interaction" data-view="services" type="button" aria-pressed="true">▪ services</button>
+          <button class="vbtn cursor-interaction" data-view="leaves" type="button" aria-pressed="false">▸ leaves</button>
+          <button class="vbtn cursor-interaction" data-view="relayout" type="button">⟲ relayout</button>
+        </span>
+      </div>
+    </header>
+
+
+    <div class="main">
+      <div class="graph-wrap">
+        <div class="graph" id="svcgraph">
+          <svg class="wires-hit" id="svcwireshit"></svg>
+          <div class="cols" id="svccols"></div>
+          <svg class="wires" id="svcwires"></svg>
+          <svg class="wires-top" id="svcwirestop"></svg>
+        </div>
+      </div>
+      <aside class="rail">
+        <div class="panel"><span class="ptab">edge log · 当前粒度</span><div class="elist" id="svcelist" aria-live="polite"></div></div>
+        <div class="panel"><span class="ptab">inspector</span><div class="insp" id="svcinsp">hover 边或列表行 · click 固定明细</div></div>
+        <div class="panel"><span class="ptab">session log</span><div class="alog" id="svcalog" aria-live="polite"></div></div>
+      </aside>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var root=document.getElementById('svcarch');
+var graph=document.getElementById('svcgraph');
+var colsEl=document.getElementById('svccols');
+var svg=document.getElementById('svcwires');
+var svgHit=document.getElementById('svcwireshit');
+var svgTop=document.getElementById('svcwirestop');
+var elistEl=document.getElementById('svcelist');
+var inspEl=document.getElementById('svcinsp');
+var alogEl=document.getElementById('svcalog');
+var chipsEl=document.getElementById('svcchips');
+var viewEl=document.getElementById('svcview');
+var SVGNS='http://www.w3.org/2000/svg';
+var RM=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/*==DATA==*//* 本块整体替换：ARCH_TITLE / ARCH_LSKEY / COLS / SERVERS / EDGES */
+var ARCH_TITLE='SERVICE ARCH';
+var ARCH_LSKEY='arch-sample';
+var TYPE={sync:{c:'#3ecf8e',dash:'10 4',dur:'1.5s',label:'同步'},
+ call:{c:'#58a6ff',dash:'6 5',dur:'1.1s',label:'调用'},
+ job :{c:'#f0a942',dash:'2 4',dur:'0.85s',label:'定时'},
+ data:{c:'#b18cff',dash:'14 5',dur:'1.9s',label:'读取'}};
+var COLS=[['web'],['app'],['data','ops']];
+var SERVERS=[
+ {id:'web',short:'Web',name:'Web 边缘',meta:'',ac:'#58a6ff',svc:[
+   {id:'nginx',short:'nginx',name:'nginx',subs:[
+     {id:'proxy',short:'反代',name:'反代层'},
+     {id:'static',short:'静态',name:'静态资源'}]},
+   {id:'gw',short:'网关',name:'API 网关'}]},
+ {id:'app',short:'App',name:'应用服务器',meta:'',ac:'#39d0c4',svc:[
+   {id:'orders',short:'订单',name:'订单服务',subs:[
+     {id:'create',short:'下单',name:'下单'},
+     {id:'reserve',short:'扣减',name:'库存扣减'}]},
+   {id:'users',short:'用户',name:'用户服务'}]},
+ {id:'data',short:'Data',name:'数据层',meta:'',ac:'#b18cff',svc:[
+   {id:'pg',short:'PG主库',name:'PostgreSQL 主库'},
+   {id:'replica',short:'副本',name:'只读副本'}]},
+ {id:'ops',short:'Ops',name:'运维',meta:'',ac:'#f0a942',svc:[
+   {id:'cron',short:'cron',name:'cron 定时器',subs:[
+     {id:'recon',short:'对账',name:'夜批对账',meta:'02:00'},
+     {id:'report',short:'报表',name:'报表推送',meta:'08:00'}]},
+   {id:'bi',short:'BI',name:'BI 看板'}]}
+];
+var EDGES=[
+ {from:'web.nginx.proxy',to:'web.gw',type:'call',sched:'实时'},
+ {from:'web.gw',to:'app.orders',type:'call',sched:'实时'},
+ {from:'web.gw',to:'app.users',type:'call',sched:'实时'},
+ {from:'app.orders.create',to:'data.pg',type:'call',sched:'下单写入'},
+ {from:'app.orders.reserve',to:'data.pg',type:'call',sched:'实时'},
+ {from:'data.pg',to:'data.replica',type:'sync',sched:'流复制'},
+ {from:'ops.cron.recon',to:'data.pg',type:'job',sched:'02:00'},
+ {from:'ops.cron.report',to:'data.replica',type:'job',sched:'08:00'},
+ {from:'ops.bi',to:'data.replica',type:'data',sched:'只读'}
+];
+/*==DATA-END==*/
+
+/* ── 节点索引 ──────────────────────────────────────────────── */
+var NODE={},SVC_COUNT=0,SUB_COUNT=0;
+SERVERS.forEach(function(s){
+  NODE[s.id]={id:s.id,kind:'server',short:s.short,label:s.name,parent:null,kids:(s.svc||[]).map(function(v){return s.id+'.'+v.id})};
+  (s.svc||[]).forEach(function(v){
+    var vid=s.id+'.'+v.id;SVC_COUNT++;
+    NODE[vid]={id:vid,kind:'svc',short:v.short,label:v.name,parent:s.id,kids:(v.subs||[]).map(function(u){return vid+'.'+u.id})};
+    (v.subs||[]).forEach(function(u){
+      var uid=vid+'.'+u.id;SUB_COUNT++;
+      NODE[uid]={id:uid,kind:'sub',short:u.short,label:u.name,parent:vid,kids:[]};
+    });
+  });
+});
+var FLAT=[];COLS.forEach(function(c){FLAT=FLAT.concat(c)});
+var SRVIDX={};FLAT.forEach(function(s,i){SRVIDX[s]=i});
+var TYPEORDER={sync:0,call:1,job:2,data:3};
+
+/* ── 状态 ──────────────────────────────────────────────────── */
+var collapsed=new Set(),mode='services',pinnedKey=null;
+var WIRES=[],PHASES={},POS={};
+
+function isVis(id){var p=NODE[id].parent;while(p){if(collapsed.has(p))return false;p=NODE[p].parent}return true}
+function resolve(id){var n=id;while(!isVis(n))n=NODE[n].parent;return n}
+function inSub(n,anc){while(n){if(n===anc)return true;n=NODE[n].parent}return false}
+
+/* ── DOM 构建 ─────────────────────────────────────────────── */
+function el(tag,cls){var e=document.createElement(tag);if(cls)e.className=cls;return e}
+function renderServer(s){
+  var sec=el('section','server open');sec.style.setProperty('--ac',s.ac);
+  var grip=el('div','grip');grip.textContent='⠿⠿⠿';grip.dataset.node=s.id;
+  sec.appendChild(grip);
+  var head=el('button','srv-head cursor-interaction');head.type='button';head.dataset.node=s.id;
+  head.setAttribute('aria-expanded','true');
+  head.innerHTML='<span class="tri">▾</span><span class="srv-name"></span><span class="srv-meta"></span><span class="badge"></span>';
+  head.querySelector('.srv-name').textContent=s.name;
+  head.querySelector('.srv-meta').textContent=s.meta||'';
+  var wrap=el('div','svc-wrap'),inner=el('div','svc-inner');
+  (s.svc||[]).forEach(function(v){inner.appendChild(renderSvc(s,v))});
+  wrap.appendChild(inner);sec.appendChild(head);sec.appendChild(wrap);
+  var rz=el('div','rsz');sec.appendChild(rz);
+  NODE[s.id].el=sec;NODE[s.id].head=head;NODE[s.id].badge=head.querySelector('.badge');
+  return sec;
+}
+function renderSvc(s,v){
+  var vid=s.id+'.'+v.id;
+  var box=el('div','svc'+((v.subs&&v.subs.length)?' has-subs open':''));box.dataset.node=vid;
+  var head=el('button','svc-head cursor-interaction');head.type='button';head.dataset.node=vid;
+  head.setAttribute('aria-expanded','true');
+  head.innerHTML='<span class="tri">▾</span><span class="svc-name"></span><span class="svc-meta"></span><span class="badge"></span>';
+  head.querySelector('.svc-name').textContent=v.name;
+  head.querySelector('.svc-meta').textContent=v.meta||'';
+  box.appendChild(head);
+  if(v.subs&&v.subs.length){
+    var wrap=el('div','sub-wrap'),inner=el('div','sub-inner');
+    v.subs.forEach(function(u,i){
+      var uid=vid+'.'+u.id;
+      var row=el('div','sub');row.dataset.node=uid;
+      var tick=el('span','tick');tick.textContent=(i===v.subs.length-1)?'└':'├';
+      var nm=el('span');nm.textContent=u.name;
+      row.appendChild(tick);row.appendChild(nm);
+      if(u.meta){var m=el('span','sub-meta');m.textContent=u.meta;row.appendChild(m)}
+      inner.appendChild(row);NODE[uid].el=row;
+    });
+    wrap.appendChild(inner);box.appendChild(wrap);
+  }
+  NODE[vid].el=box;NODE[vid].head=head;NODE[vid].badge=head.querySelector('.badge');
+  return box;
+}
+COLS.forEach(function(col){
+  col.forEach(function(sid){
+    var s=SERVERS.filter(function(x){return x.id===sid})[0];
+    colsEl.appendChild(renderServer(s));
+  });
+});
+
+/* ── 收合 / 展开 ───────────────────────────────────────────── */
+function setTri(id){
+  var n=NODE[id];if(!n.head)return;
+  var open=!collapsed.has(id);
+  n.head.querySelector('.tri').textContent=open?'▾':'▸';
+  n.head.setAttribute('aria-expanded',open?'true':'false');
+}
+function applyState(){
+  Object.keys(NODE).forEach(function(id){
+    var n=NODE[id];if(!n.kids.length||!n.el)return;
+    var open=!collapsed.has(id);
+    n.el.classList.toggle('open',open);
+    setTri(id);
+  });
+  root.querySelectorAll('.vbtn').forEach(function(b){
+    var on=b.dataset.view===mode;
+    b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');
+  });
+  if(viewEl)viewEl.textContent=mode;
+  rebuild();
+  animateRedraw();
+}
+function toggle(id){
+  if(!NODE[id].kids.length)return;
+  var closing=!collapsed.has(id);
+  if(closing)collapsed.add(id);else collapsed.delete(id);
+  mode='custom';pinnedKey=null;renderInspector(null);
+  applyState();
+  var moved=EDGES.filter(function(e){return inSub(e.from,id)||inSub(e.to,id)}).length;
+  logLine((closing?'<span style="color:var(--orange)">▾ collapse</span> ':'<span style="color:var(--teal)">▸ expand</span> ')
+    +shortPath(id)+' · '+moved+' 边'+(closing?'上浮至父级':'下沉回叶子'));
+  saveState();
+}
+function setView(v){
+  collapsed=new Set();
+  if(v==='servers'){Object.keys(NODE).forEach(function(id){if(NODE[id].kind==='server'&&NODE[id].kids.length)collapsed.add(id)})}
+  else if(v==='services'){Object.keys(NODE).forEach(function(id){if(NODE[id].kind==='svc'&&NODE[id].kids.length)collapsed.add(id)})}
+  mode=v;pinnedKey=null;renderInspector(null);
+  applyState();
+  var up=EDGES.filter(function(e){return resolve(e.from)!==e.from||resolve(e.to)!==e.to}).length;
+  logLine('<span style="color:var(--purple)">▸ view</span> '+v+' · '+up+' 边改为粗粒度锚定');
+  saveState();
+}
+function shortPath(id){
+  var p=NODE[id].parent?NODE[NODE[id].parent].short+':':'';
+  return p+NODE[id].short;
+}
+
+/* ── 自由画布布局（可拖拽 / 可调宽） ───────────────────────── */
+function defaultLayout(){
+  Object.keys(NODE).forEach(function(id){
+    var n=NODE[id];
+    if(n.kind==='server'&&n.el)n.el.style.width='';
+  });
+  var x=0;
+  COLS.forEach(function(col){
+    var colW=0,stack=[];
+    col.forEach(function(sid){
+      var elm=NODE[sid].el;
+      var w=Math.max(216,Math.min(330,elm.offsetWidth||232));
+      colW=Math.max(colW,w);
+      stack.push({sid:sid,w:w,h:elm.offsetHeight});
+    });
+    var y=(col.length===1)?112:0;
+    stack.forEach(function(s){
+      if(!POS[s.sid])POS[s.sid]={x:x,y:y,w:s.w};
+      y+=s.h+26;
+    });
+    x+=colW+30;
+  });
+}
+function applyPos(only){
+  Object.keys(POS).forEach(function(sid){
+    if(only&&sid!==only)return;
+    var elm=NODE[sid]&&NODE[sid].el;
+    if(!elm)return;
+    elm.style.left=POS[sid].x+'px';
+    elm.style.top=POS[sid].y+'px';
+    elm.style.width=POS[sid].w+'px';
+  });
+}
+function canvasSize(){
+  var r=0,b=0;
+  Object.keys(POS).forEach(function(sid){
+    var elm=NODE[sid]&&NODE[sid].el;
+    if(!elm)return;
+    r=Math.max(r,POS[sid].x+elm.offsetWidth);
+    b=Math.max(b,POS[sid].y+elm.offsetHeight);
+  });
+  graph.style.minWidth=Math.max(1000,r+40)+'px';
+  graph.style.height=Math.max(520,b+34)+'px';
+}
+
+/* ── 边聚合与绘制 ──────────────────────────────────────────── */
+function topOf(id){var n=NODE[id];while(n&&n.kind!=='server')n=NODE[n.parent];return n?n.id:null}
+function rel(elm){
+  var r=elm.getBoundingClientRect(),g=graph.getBoundingClientRect();
+  return {x:r.left-g.left,y:r.top-g.top,w:r.width,h:r.height};
+}
+function mk(tag){return document.createElementNS(SVGNS,tag)}
+function rebuild(light){
+  canvasSize();
+  var groups=new Map(),internal=0;
+  EDGES.forEach(function(e){
+    var s=resolve(e.from),t=resolve(e.to);
+    if(s===t){internal++;return}
+    var k=s+'>'+t+'|'+e.type;
+    if(!groups.has(k))groups.set(k,{key:k,s:s,t:t,type:e.type,leaves:[]});
+    groups.get(k).leaves.push(e);
+  });
+  var byPair=new Map();
+  groups.forEach(function(g){
+    var pk=g.s+'>'+g.t;
+    var n=(byPair.get(pk)||0);byPair.set(pk,n+1);g.pIdx=n;g.pTot=n+1;
+  });
+  drawWires(groups);
+  if(!light){
+    renderRail(groups);
+    renderBadges(groups);
+    renderChips(groups.size,internal);
+  }
+  applyPinStyles();
+}
+function drawWires(groups){
+  svg.innerHTML='';svgHit.innerHTML='';svgTop.innerHTML='';
+  var gr=graph.getBoundingClientRect();
+  svg.setAttribute('width',Math.ceil(gr.width));svg.setAttribute('height',Math.ceil(gr.height));
+  svgHit.setAttribute('width',Math.ceil(gr.width));svgHit.setAttribute('height',Math.ceil(gr.height));
+  svgTop.setAttribute('width',Math.ceil(gr.width));svgTop.setAttribute('height',Math.ceil(gr.height));
+  var defs=mk('defs');
+  Object.keys(TYPE).forEach(function(ty){
+    var m=mk('marker');m.setAttribute('id','ah-'+ty);
+    m.setAttribute('viewBox','0 0 8 8');m.setAttribute('refX','7.1');m.setAttribute('refY','4');
+    m.setAttribute('markerWidth','8');m.setAttribute('markerHeight','8');
+    m.setAttribute('orient','auto-start-reverse');
+    var p=mk('path');p.setAttribute('d','M0,0.9 L7.4,4 L0,7.1 z');p.setAttribute('fill',TYPE[ty].c);
+    m.appendChild(p);defs.appendChild(m);
+  });
+  svg.appendChild(defs);
+  WIRES=[];
+  groups.forEach(function(g){
+    var sEl=NODE[g.s].el,tEl=NODE[g.t].el;
+    if(!sEl||!tEl)return;
+    var sr=rel(sEl),tr=rel(tEl);
+    var scx=sr.x+sr.w/2,tcx=tr.x+tr.w/2;
+    var off=(g.pIdx-(g.pTot-1)/2)*13;
+    var ax,ay,bx,by,vert=false,loop=false;
+    if(topOf(g.s)===topOf(g.t)&&Math.abs(tcx-scx)<28){
+      /* 同服务器内部边：右侧出、右侧入 */
+      loop=true;
+      ax=sr.x+sr.w;ay=sr.y+sr.h/2+off;bx=tr.x+tr.w;by=tr.y+tr.h/2+off;
+    }else if(Math.abs(tcx-scx)<28){vert=true;
+      if(sr.y+sr.h/2<tr.y+tr.h/2){ax=scx;ay=sr.y+sr.h;bx=tcx;by=tr.y}
+      else{ax=scx;ay=sr.y;bx=tcx;by=tr.y+tr.h}
+      ax+=off;bx+=off;
+    }else if(scx<tcx){ax=sr.x+sr.w;ay=sr.y+sr.h/2+off;bx=tr.x;by=tr.y+tr.h/2+off}
+    else{ax=sr.x;ay=sr.y+sr.h/2+off;bx=tr.x+tr.w;by=tr.y+tr.h/2+off}
+    var d;
+    if(loop){
+      var bulge=Math.max(sr.x+sr.w,tr.x+tr.w)+Math.max(24,Math.min(56,Math.abs(ay-by)*0.35+18))+Math.abs(off);
+      d='M'+ax+' '+ay+' C'+bulge+' '+ay+','+bulge+' '+by+','+bx+' '+by;
+    }else if(vert){
+      var dy=Math.max(30,Math.min(140,Math.abs(by-ay)*0.5));
+      d='M'+ax+' '+ay+' C'+ax+' '+(ay+(by>ay?dy:-dy))+','+bx+' '+(by+(by>ay?-dy:dy))+','+bx+' '+by;
+    }else{
+      var dx=Math.max(36,Math.min(150,Math.abs(bx-ax)*0.42));
+      d='M'+ax+' '+ay+' C'+(ax+(bx>ax?dx:-dx))+' '+ay+','+(bx+(bx>ax?-dx:dx))+' '+by+','+bx+' '+by;
+    }
+    var t=TYPE[g.type];
+    var wire=mk('path');
+    wire.setAttribute('d',d);wire.setAttribute('class','wire');
+    wire.setAttribute('stroke',t.c);wire.setAttribute('color',t.c);
+    wire.setAttribute('stroke-dasharray',t.dash);
+    wire.style.setProperty('--wdur',t.dur);
+    wire.setAttribute('marker-end','url(#ah-'+g.type+')');
+    svg.appendChild(wire);
+    var hit=mk('path');
+    hit.setAttribute('d',d);hit.setAttribute('class','hit');
+    hit.setAttribute('data-key',g.key);
+    var tip=t.label+' ×'+g.leaves.length+' · '+NODE[g.s].short+' ▶ '+NODE[g.t].short;
+    hit.setAttribute('data-tooltip',tip);
+    svgHit.appendChild(hit);
+    var badge=null;
+    if(g.leaves.length>1){
+      badge=mk('text');
+      badge.setAttribute('class','wbt');badge.setAttribute('text-anchor','middle');
+      badge.textContent='×'+g.leaves.length;
+      svgTop.appendChild(badge);
+    }
+    var dot=null;
+    if(!RM){
+      dot=mk('circle');
+      dot.setAttribute('r','2.3');dot.setAttribute('fill',t.c);dot.setAttribute('class','flowdot');
+      svgTop.appendChild(dot);
+    }
+    WIRES.push({key:g.key,g:g,wire:wire,hit:hit,badge:badge,dot:dot,len:0,
+      phase:(PHASES[g.key]!=null)?PHASES[g.key]:Math.random(),speed:56});
+    try{WIRES[WIRES.length-1].len=wire.getTotalLength()}catch(err){}
+    if(badge&&WIRES[WIRES.length-1].len){
+      var pt=wire.getPointAtLength(WIRES[WIRES.length-1].len*0.5);
+      badge.setAttribute('x',pt.x);badge.setAttribute('y',pt.y-5);
+    }
+  });
+}
+function renderRail(groups){
+  var arr=[];groups.forEach(function(g){arr.push(g)});
+  arr.sort(function(a,b){
+    var d=(SRVIDX[a.s.split('.')[0]]||0)-(SRVIDX[b.s.split('.')[0]]||0);
+    if(d)return d;
+    return (TYPEORDER[a.type]-TYPEORDER[b.type]);
+  });
+  elistEl.innerHTML='';
+  arr.forEach(function(g){
+    var row=el('button','erow cursor-interaction');row.type='button';row.dataset.key=g.key;
+    row.style.setProperty('--c',TYPE[g.type].c);
+    row.innerHTML='<span class="ed"></span><span class="ep"></span><span class="ec"></span>';
+    row.querySelector('.ep').textContent=NODE[g.s].short+' ▶ '+NODE[g.t].short;
+    row.querySelector('.ec').textContent=g.type+' ×'+g.leaves.length;
+    elistEl.appendChild(row);
+  });
+}
+function renderBadges(groups){
+  var anchorCount={};
+  groups.forEach(function(g){
+    anchorCount[g.s]=(anchorCount[g.s]||0)+g.leaves.length;
+    anchorCount[g.t]=(anchorCount[g.t]||0)+g.leaves.length;
+  });
+  Object.keys(NODE).forEach(function(id){
+    var n=NODE[id];if(!n.badge)return;
+    if(n.kids.length&&collapsed.has(id)){
+      var w=anchorCount[id]||0;
+      n.badge.innerHTML='▸'+n.kids.length+(w?' <b>⇡'+w+'</b>':'');
+    }else{
+      var w2=anchorCount[id]||0;
+      n.badge.innerHTML=w2?'⇡'+w2:'';
+    }
+  });
+}
+function renderChips(wires,internal){
+  if(!chipsEl)return;
+  chipsEl.innerHTML='';
+  var c=[['srv '+SERVERS.length,''],['svc '+SVC_COUNT,''],['sub '+SUB_COUNT,''],
+         ['wires '+wires,'cw'],['internal '+internal,''],['leaf '+EDGES.length,'']];
+  c.forEach(function(p){
+    var s=el('span','chip '+p[1]);s.innerHTML=p[0].replace(/^([a-z]+ )/,'$1<b>')+'</b>';
+    chipsEl.appendChild(s);
+  });
+}
+
+/* ── 高亮 / inspector / log ────────────────────────────────── */
+function clearHot(){
+  graph.classList.remove('focus');
+  Object.keys(NODE).forEach(function(id){if(NODE[id].el)NODE[id].el.classList.remove('hot','dimmed')});
+  WIRES.forEach(function(w){w.wire.classList.remove('hot');w.hit.classList.remove('hot');
+    if(w.badge)w.badge.classList.remove('hot');if(w.dot)w.dot.classList.remove('hot')});
+  elistEl.querySelectorAll('.erow').forEach(function(r){r.classList.remove('hot')});
+}
+function hotKey(key){
+  clearHot();
+  if(!key)return;
+  graph.classList.add('focus');
+  WIRES.forEach(function(w){
+    var on=w.key===key;
+    w.wire.classList.toggle('hot',on);w.hit.classList.toggle('hot',on);
+    if(w.badge)w.badge.classList.toggle('hot',on);
+    if(w.dot)w.dot.classList.toggle('hot',on);
+    if(on){
+      [w.g.s,w.g.t].forEach(function(id){
+        if(NODE[id].el)NODE[id].el.classList.add('hot');
+      });
+    }
+  });
+  Object.keys(NODE).forEach(function(id){
+    if(NODE[id].el&&!NODE[id].el.classList.contains('hot'))NODE[id].el.classList.add('dimmed');
+  });
+  var row=elistEl.querySelector('[data-key="'+key+'"]');
+  if(row)row.classList.add('hot');
+  if(!pinnedKey)renderInspector(key);
+}
+function hotNode(id){
+  clearHot();
+  var rid=resolve(id);
+  graph.classList.add('focus');
+  var isRel=function(w){return inSub(w.g.s,rid)||inSub(w.g.t,rid)};
+  var anchors={};
+  WIRES.forEach(function(w){
+    var on=isRel(w);
+    w.wire.classList.toggle('hot',on);w.hit.classList.toggle('hot',on);
+    if(w.badge)w.badge.classList.toggle('hot',on);
+    if(w.dot)w.dot.classList.toggle('hot',on);
+    if(on){anchors[w.g.s]=1;anchors[w.g.t]=1}
+  });
+  Object.keys(NODE).forEach(function(nid){
+    if(!NODE[nid].el)return;
+    var on=inSub(nid,id)||inSub(id,nid)||anchors[nid];
+    NODE[nid].el.classList.toggle('hot',on);
+    NODE[nid].el.classList.toggle('dimmed',!on);
+  });
+  elistEl.querySelectorAll('.erow').forEach(function(r){
+    var w=null;
+    for(var i=0;i<WIRES.length;i++)if(WIRES[i].key===r.dataset.key){w=WIRES[i];break}
+    if(w)r.classList.toggle('hot',isRel(w));
+  });
+  if(!pinnedKey)renderNodeInspector(rid);
+}
+function renderNodeInspector(rid){
+  var rel=WIRES.filter(function(w){return inSub(w.g.s,rid)||inSub(w.g.t,rid)});
+  if(!rel.length)return;
+  var h=el('div','ihead');
+  h.innerHTML='节点 '+NODE[rid].short+' · 关联 '+rel.length+' 条边';
+  inspEl.innerHTML='';inspEl.appendChild(h);
+  rel.forEach(function(w){
+    var t=TYPE[w.g.type];
+    var r=el('div','ileaf');
+    r.innerHTML='<b style="color:'+t.c+'">▪</b> '+NODE[w.g.s].short+' ▶ '+NODE[w.g.t].short+' · '+t.label+' ×'+w.g.leaves.length;
+    inspEl.appendChild(r);
+  });
+  var note=el('div','inote');
+  note.textContent='hover / click 具体连线可看最小颗粒明细';
+  inspEl.appendChild(note);
+}
+function applyPinStyles(){
+  elistEl.querySelectorAll('.erow').forEach(function(r){
+    r.classList.toggle('pin',r.dataset.key===pinnedKey);
+  });
+  WIRES.forEach(function(w){
+    w.wire.classList.toggle('pin',w.key===pinnedKey);
+  });
+}
+function renderInspector(key,quiet){
+  if(!key){inspEl.innerHTML='hover 边或列表行 · click 固定明细';return}
+  var w=null;
+  for(var i=0;i<WIRES.length;i++)if(WIRES[i].key===key){w=WIRES[i];break}
+  if(!w){if(!quiet)inspEl.innerHTML='（该边已随收合变化 · 重新 hover）';return}
+  var g=w.g,t=TYPE[g.type];
+  var h=el('div','ihead');
+  h.innerHTML='<span style="color:'+t.c+'">■</span> '+NODE[g.s].short+' ▶ '+NODE[g.t].short+' · '+t.label+' ×'+g.leaves.length;
+  inspEl.innerHTML='';inspEl.appendChild(h);
+  g.leaves.forEach(function(e){
+    var r=el('div','ileaf');r.style.setProperty('--c',t.c);
+    r.innerHTML='<b>▪</b> '+NODE[e.from].short+' ▶ '+NODE[e.to].short+' · '+e.sched;
+    inspEl.appendChild(r);
+  });
+  var note=el('div','inote');
+  note.textContent='当前锚定 '+NODE[g.s].short+' ▶ '+NODE[g.t].short+'（收合上浮后的粒度）';
+  inspEl.appendChild(note);
+  if(pinnedKey===key){
+    var c=el('button','iclear cursor-interaction');c.type='button';c.textContent='✕ 取消固定';
+    c.addEventListener('click',function(ev){ev.stopPropagation();pinnedKey=null;applyPinStyles();renderInspector(null)});
+    inspEl.appendChild(c);
+  }
+}
+function logLine(html){
+  var d=el('div','al');
+  var ts=new Date().toTimeString().slice(0,8);
+  d.innerHTML='<span style="color:var(--faint)">'+ts+'</span> '+html;
+  alogEl.insertBefore(d,alogEl.firstChild);
+  while(alogEl.children.length>9)alogEl.removeChild(alogEl.lastChild);
+}
+
+/* ── 事件 ─────────────────────────────────────────────────── */
+colsEl.addEventListener('click',function(ev){
+  if(justDragged){justDragged=false;return}
+  var b=ev.target.closest('button[data-node]');
+  if(b)toggle(b.dataset.node);
+});
+var drag=null,justDragged=false;
+colsEl.addEventListener('pointerdown',function(ev){
+  if(ev.pointerType==='mouse'&&ev.button!==0)return;
+  var t=ev.target;
+  if(!t||!t.closest)return;
+  var rsz=t.closest('.rsz'),grip=t.closest('.grip');
+  if(!rsz&&!grip)return;
+  var srv=t.closest('.server');
+  if(!srv)return;
+  var sid=srv.querySelector('.srv-head').dataset.node;
+  if(!sid||!POS[sid])return;
+  drag={sid:sid,el:srv,mode:rsz?'w':'xy',sx:ev.clientX,sy:ev.clientY,
+        ox:POS[sid].x,oy:POS[sid].y,ow:POS[sid].w,moved:false};
+  srv.classList.add('dragging');
+  try{srv.setPointerCapture(ev.pointerId)}catch(e){}
+});
+window.addEventListener('pointermove',function(ev){
+  if(!drag)return;
+  var dx=ev.clientX-drag.sx,dy=ev.clientY-drag.sy;
+  if(!drag.moved&&Math.abs(dx)+Math.abs(dy)>4)drag.moved=true;
+  if(!drag.moved)return;
+  var p=POS[drag.sid];
+  if(drag.mode==='w')p.w=Math.max(190,Math.min(460,drag.ow+dx));
+  else{p.x=Math.max(0,drag.ox+dx);p.y=Math.max(0,drag.oy+dy)}
+  applyPos(drag.sid);
+  rebuild(true);
+});
+function endDrag(){
+  if(!drag)return;
+  drag.el.classList.remove('dragging');
+  var moved=drag.moved;drag=null;
+  if(moved){justDragged=true;rebuild();saveState()}
+}
+window.addEventListener('pointerup',endDrag);
+window.addEventListener('pointercancel',endDrag);
+/* 按住 Alt：显示全部把手 */
+window.addEventListener('keydown',function(ev){
+  if(ev.key==='Alt')root.classList.add('alt-on');
+});
+window.addEventListener('keyup',function(ev){
+  if(ev.key==='Alt')root.classList.remove('alt-on');
+});
+window.addEventListener('blur',function(){root.classList.remove('alt-on')});
+colsEl.addEventListener('mouseover',function(ev){
+  var b=ev.target.closest('[data-node]');
+  if(b)hotNode(b.dataset.node);
+});
+colsEl.addEventListener('mouseout',function(ev){
+  var b=ev.target.closest('[data-node]');
+  if(b)clearHot();
+});
+elistEl.addEventListener('mouseover',function(ev){
+  var r=ev.target.closest('.erow');
+  if(r)hotKey(r.dataset.key);
+});
+elistEl.addEventListener('mouseout',function(ev){
+  if(ev.target.closest('.erow'))clearHot();
+});
+elistEl.addEventListener('click',function(ev){
+  var r=ev.target.closest('.erow');
+  if(!r)return;
+  pinnedKey=(pinnedKey===r.dataset.key)?null:r.dataset.key;
+  applyPinStyles();renderInspector(r.dataset.key);
+});
+svgHit.addEventListener('mouseover',function(ev){
+  if(ev.target.classList&&ev.target.classList.contains('hit'))hotKey(ev.target.getAttribute('data-key'));
+});
+svgHit.addEventListener('mouseout',function(ev){
+  if(ev.target.classList&&ev.target.classList.contains('hit'))clearHot();
+});
+svgHit.addEventListener('click',function(ev){
+  if(ev.target.classList&&ev.target.classList.contains('hit')){
+    var k=ev.target.getAttribute('data-key');
+    pinnedKey=(pinnedKey===k)?null:k;
+    applyPinStyles();renderInspector(k);
+  }
+});
+root.querySelectorAll('.vbtn').forEach(function(b){
+  b.addEventListener('click',function(){
+    if(b.dataset.view==='relayout'){relayout();return}
+    setView(b.dataset.view);
+  });
+});
+function relayout(){
+  POS={};
+  defaultLayout();
+  applyPos();
+  rebuild();
+  logLine('<span style="color:var(--teal)">⟲ relayout</span> · 服务器已复位到默认网格');
+  saveState();
+}
+
+/* 重布局：动画期间逐帧重画 */
+var animT=null;
+function animateRedraw(){
+  if(animT)cancelAnimationFrame(animT);
+  var t0=performance.now();
+  function step(){
+    rebuild();
+    if(performance.now()-t0<380)animT=requestAnimationFrame(step);
+    else animT=null;
+  }
+  animT=requestAnimationFrame(step);
+}
+var roT=null;
+if(window.ResizeObserver){
+  new ResizeObserver(function(){
+    if(roT)cancelAnimationFrame(roT);
+    roT=requestAnimationFrame(function(){rebuild()});
+  }).observe(graph);
+}
+window.addEventListener('resize',function(){rebuild()});
+
+/* 流动光点 */
+if(!RM){
+  var last=performance.now();
+  function tick(now){
+    var dt=(now-last)/1000;last=now;
+    WIRES.forEach(function(w){
+      if(!w.dot||!w.len)return;
+      w.phase=(w.phase+dt*w.speed/w.len)%1;
+      PHASES[w.key]=w.phase;
+      var pt=w.wire.getPointAtLength(w.phase*w.len);
+      w.dot.setAttribute('cx',pt.x);w.dot.setAttribute('cy',pt.y);
+    });
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ── 状态记忆（localStorage + 会话 widgetState 双写） ─────── */
+var saveT=null,LSKEY=ARCH_LSKEY;
+function snapshotState(){return {collapsed:Array.from(collapsed),mode:mode,pos:POS}}
+function saveState(){
+  clearTimeout(saveT);
+  saveT=setTimeout(function(){
+    saveT=null;
+    var s=snapshotState();
+    try{localStorage.setItem(LSKEY,JSON.stringify(s))}catch(e){}
+    if(window.zcode&&window.zcode.setWidgetState){
+      try{window.zcode.setWidgetState({privateContent:s}).catch(function(){})}catch(e){}
+    }
+  },250);
+}
+window.addEventListener('pagehide',function(){
+  if(!saveT)return;
+  clearTimeout(saveT);saveT=null;
+  try{localStorage.setItem(LSKEY,JSON.stringify(snapshotState()))}catch(e){}
+});
+function loadState(){
+  var st=null;
+  try{var v=localStorage.getItem(LSKEY);if(v)st=JSON.parse(v)}catch(e){}
+  if(!st&&window.zcode&&window.zcode.widgetState)st=window.zcode.widgetState.privateContent;
+  if(st&&Array.isArray(st.collapsed)){
+    var ok=true;
+    st.collapsed.forEach(function(id){if(!NODE[id]||!NODE[id].kids.length)ok=false});
+    if(ok){
+      collapsed=new Set(st.collapsed);
+      mode=(typeof st.mode==='string')?st.mode:'custom';
+      if(st.pos&&typeof st.pos==='object'){
+        var p={};
+        Object.keys(st.pos).forEach(function(k){
+          var q=st.pos[k];
+          if(NODE[k]&&NODE[k].kind==='server'&&q&&isFinite(q.x)&&isFinite(q.y)&&isFinite(q.w)){
+            p[k]={x:Math.max(0,+q.x),y:Math.max(0,+q.y),w:Math.max(190,Math.min(460,+q.w))};
+          }
+        });
+        POS=p;
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+/* ── 启动 ─────────────────────────────────────────────────── */
+if(!loadState()){setViewSilent('services')}
+function setViewSilent(v){
+  collapsed=new Set();
+  Object.keys(NODE).forEach(function(id){
+    if(NODE[id].kind==='svc'&&NODE[id].kids.length)collapsed.add(id);
+  });
+  mode=v;
+}
+document.getElementById('svctitle').textContent=ARCH_TITLE;
+document.getElementById('svcsummary').textContent=SERVERS.length+' 台服务器、'+SVC_COUNT+' 个服务、'+SUB_COUNT+' 个子服务、'+EDGES.length+' 条调度关系。调度边锚定最小颗粒；收合节点时边上浮到父节点。';
+defaultLayout();
+applyPos();
+applyState();
+logLine('<span style="color:var(--teal)">boot</span> · '+SERVERS.length+' srv / '+SVC_COUNT+' svc / '+SUB_COUNT+' sub / '+EDGES.length+' edges loaded');
+})();
+</script>
+</div>
+
+</body>
+</html>

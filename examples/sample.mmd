@@ -1,0 +1,40 @@
+flowchart LR
+  subgraph WEB["Web 边缘"]
+    direction TB
+    subgraph WEB_NGINX["nginx"]
+      WEB_NGINX_PROXY["反代层"]
+      WEB_NGINX_STATIC["静态资源"]
+    end
+    WEB_GW["API 网关"]
+  end
+  subgraph APP["应用服务器"]
+    direction TB
+    subgraph APP_ORDERS["订单服务"]
+      APP_ORDERS_CREATE["下单"]
+      APP_ORDERS_RESERVE["库存扣减"]
+    end
+    APP_USERS["用户服务"]
+  end
+  subgraph DATA["数据层"]
+    direction TB
+    DATA_PG["PostgreSQL 主库"]
+    DATA_REPLICA["只读副本"]
+  end
+  subgraph OPS["运维"]
+    direction TB
+    subgraph OPS_CRON["cron 定时器"]
+      OPS_CRON_RECON["夜批对账 02:00"]
+      OPS_CRON_REPORT["报表推送 08:00"]
+    end
+    OPS_BI["BI 看板"]
+  end
+
+  WEB_NGINX_PROXY -->|call| WEB_GW
+  WEB_GW -->|call| APP_ORDERS
+  WEB_GW -->|call| APP_USERS
+  APP_ORDERS_CREATE -->|"call · 下单写入"| DATA_PG
+  APP_ORDERS_RESERVE -->|call| DATA_PG
+  DATA_PG ==>|"sync · 流复制"| DATA_REPLICA
+  OPS_CRON_RECON -.->|"job · 02:00"| DATA_PG
+  OPS_CRON_REPORT -.->|"job · 08:00"| DATA_REPLICA
+  OPS_BI -.-|"data · 只读"| DATA_REPLICA

@@ -1,0 +1,48 @@
+# arch-diagram
+
+> 服务架构图 skill。两个方法：① 自然语言 → Mermaid（约定线型：sync 同步 / call 调用 / job 定时 / data 读取）；② Mermaid → 终端风交互 HTML（可拖拽、收合上浮、本地记忆布局）。零依赖、单文件模板、跨 agent 通用。
+> 本文件面向 agent：按下方 Install 安装，按 Usage 使用。
+
+## Install
+
+把仓库中以下两个文件复制到你的 agent 的 skill 目录，保持相对路径不变：
+
+    <skills-dir>/arch-diagram/SKILL.md
+    <skills-dir>/arch-diagram/assets/template.html
+
+raw 下载地址：
+
+    https://raw.githubusercontent.com/panfu/arch-diagram-skill/main/SKILL.md
+    https://raw.githubusercontent.com/panfu/arch-diagram-skill/main/assets/template.html
+
+常见 `<skills-dir>`（按你所在 agent 选一个，已存在哪个用哪个）：
+
+- 通用 / ZCode：`~/.agents/skills/`
+- Claude Code：`~/.claude/skills/`
+- Cursor：`~/.cursor/skills/`
+- 其它 agent：其文档声明的 skills 目录
+
+安装后验证：对任一 agent 说“用 arch-diagram 把『A 服务器跑 nginx 和 app，app 每日 02:00 同步数据到 B 服务器的 PostgreSQL』转成 mermaid”，应输出符合约定线型的 flowchart。
+
+## Usage
+
+方法一（自然语言 → Mermaid）：把自然语言里的 机器→服务器 / 软件→服务 / 组件→子服务 抽出来，按线型约定输出 flowchart。动词映射：同步/写回→`==>`，调用/请求→`-->`，定时/推送→`-.->`，读库→`-.-`。
+
+方法二（Mermaid → HTML）：读已安装的 `assets/template.html`，把 `/*==DATA==*/…/*==DATA-END==*/` 数据块整体替换为解析结果（ARCH_TITLE / ARCH_LSKEY / COLS / SERVERS / EDGES 五项），产出单文件 HTML。完整规则见 SKILL.md。
+
+串联：先方法一再方法二，自然语言直接出交互图。
+
+## Files
+
+- `SKILL.md` — skill 主体规则（两种方法的完整步骤与 QA）
+- `assets/template.html` — 生成 HTML 的参数化模板（默认数据 = 示例）
+- `examples/sample.mmd` — Mermaid 方言完整示例
+- `examples/sample.html` — 模板生成的成品示例（浏览器可直接打开）
+- `README.md` — 面向人的说明
+- `LICENSE` — MIT
+
+## Notes
+
+- 生成的 HTML 无任何外部依赖（无 CDN、无字体、无构建），文件协议或任意静态托管均可直接打开。
+- HTML 布局与收合状态存于浏览器 localStorage，键由 ARCH_LSKEY 指定，一图一键。
+- 仓库源码与安装目标均不含任何私有环境信息。
