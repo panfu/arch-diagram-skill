@@ -112,9 +112,6 @@ background:linear-gradient(180deg,rgba(14,19,32,0),#0e1320 60%);opacity:0;transi
 #svcarch .inote{margin-top:6px;color:var(--faint);font-size:10.5px}
 #svcarch .iclear{color:var(--faint);font-size:10.5px;text-decoration:underline;margin-top:6px;display:inline-block}
 #svcarch .iclear:hover{color:var(--ink)}
-#svcarch .alog{display:flex;flex-direction:column;gap:2px;color:var(--dim);font-size:10.5px}
-#svcarch .alog .al:nth-child(n+4){opacity:.5}
-#svcarch .alog .al:nth-child(n+7){opacity:.28}
 
 @media (max-width:1060px){
   #svcarch .main{flex-direction:column}
@@ -165,11 +162,11 @@ background:linear-gradient(180deg,rgba(14,19,32,0),#0e1320 60%);opacity:0;transi
   <div class="tbody">
     <header>
       <div class="lrow">
-        <span class="lg"><i class="sw" style="--c:#3ecf8e"></i>sync 同步</span>
-        <span class="lg"><i class="sw" style="--c:#58a6ff"></i>call 调用</span>
-        <span class="lg"><i class="sw" style="--c:#f0a942"></i>job 定时</span>
-        <span class="lg"><i class="sw" style="--c:#b18cff"></i>data 读取</span>
-        <span class="lg"><i class="sw" style="--c:#4a5468"></i>internal 同宿主</span>
+        <span class="lg"><i class="sw" style="--c:#3ecf8e"></i>sync</span>
+        <span class="lg"><i class="sw" style="--c:#58a6ff"></i>call</span>
+        <span class="lg"><i class="sw" style="--c:#f0a942"></i>job</span>
+        <span class="lg"><i class="sw" style="--c:#b18cff"></i>data</span>
+        <span class="lg"><i class="sw" style="--c:#4a5468"></i>internal</span>
         <span class="spacer"></span>
         <span class="views">
           <button class="vbtn cursor-interaction" data-view="servers" type="button" aria-pressed="false">▾ servers</button>
@@ -191,9 +188,8 @@ background:linear-gradient(180deg,rgba(14,19,32,0),#0e1320 60%);opacity:0;transi
         </div>
       </div>
       <aside class="rail">
-        <div class="panel"><span class="ptab">edge log · 当前粒度</span><div class="elist" id="svcelist" aria-live="polite"></div><div class="emore" id="svcemore" aria-hidden="true">▾</div></div>
-        <div class="panel"><span class="ptab">inspector</span><div class="insp" id="svcinsp">hover 边或列表行 · click 固定明细</div></div>
-        <div class="panel"><span class="ptab">session log</span><div class="alog" id="svcalog" aria-live="polite"></div></div>
+        <div class="panel"><span class="ptab">edge log</span><div class="elist" id="svcelist" aria-live="polite"></div><div class="emore" id="svcemore" aria-hidden="true">▾</div></div>
+        <div class="panel"><span class="ptab">inspector</span><div class="insp" id="svcinsp">hover a wire or row · click to pin</div></div>
       </aside>
     </div>
 
@@ -203,50 +199,50 @@ background:linear-gradient(180deg,rgba(14,19,32,0),#0e1320 60%);opacity:0;transi
 <div class="modal" id="svcmodal" hidden>
   <div class="mback" data-close="1"></div>
   <div class="mbox" role="dialog" aria-modal="true" aria-label="编辑节点">
-    <div class="mtitle" id="svcmtitle">编辑</div>
-    <div class="mrow"><label for="svcmname">名称</label><input class="minput" id="svcmname" maxlength="40"></div>
-    <div class="mrow"><label for="svcmmeta">备注</label><input class="minput" id="svcmmeta" maxlength="60" placeholder="可选"></div>
-    <div class="mrow"><label>颜色</label><span class="swatches" id="svcmsw"></span><input type="color" class="mcolor" id="svcmcolor"></div>
+    <div class="mtitle" id="svcmtitle">edit</div>
+    <div class="mrow"><label for="svcmname">Name</label><input class="minput" id="svcmname" maxlength="40"></div>
+    <div class="mrow"><label for="svcmmeta">Meta</label><input class="minput" id="svcmmeta" maxlength="60" placeholder="可选"></div>
+    <div class="mrow"><label>Color</label><span class="swatches" id="svcmsw"></span><input type="color" class="mcolor" id="svcmcolor"></div>
     <div class="mrow" id="svcmaddrow" hidden>
-      <label for="svcmaddname">新增</label>
-      <input class="minput" id="svcmaddname" maxlength="40" placeholder="下属名称">
-      <input class="minput" id="svcmaddmeta" maxlength="60" placeholder="备注(可选)">
+      <label for="svcmaddname">Add</label>
+      <input class="minput" id="svcmaddname" maxlength="40" placeholder="child name">
+      <input class="minput" id="svcmaddmeta" maxlength="60" placeholder="meta (optional)">
       <button class="mbtn" id="svcmaddbtn" type="button">＋</button>
     </div>
     <div class="mfoot">
-      <button class="mbtn danger" id="svcmdel" type="button">✕ 删除</button>
+      <button class="mbtn danger" id="svcmdel" type="button">✕ delete</button>
       <span class="mspacer"></span>
-      <button class="mbtn" id="svcmcancel" type="button">取消</button>
-      <button class="mbtn primary" id="svcmok" type="button">保存</button>
+      <button class="mbtn" id="svcmcancel" type="button">Cancel</button>
+      <button class="mbtn primary" id="svcmok" type="button">Save</button>
     </div>
   </div>
 </div>
 <div class="modal" id="svcedgemodal" hidden>
   <div class="mback" data-close="1"></div>
   <div class="mbox" role="dialog" aria-modal="true" aria-label="编辑连线">
-    <div class="mtitle" id="svcemtitle">编辑 · 连线</div>
+    <div class="mtitle" id="svcemtitle">edit · edge</div>
     <div id="svcemlist"></div>
-    <div class="mrow"><label>类型</label><span class="segs" id="svcemtypes"></span></div>
-    <div class="mrow"><label for="svcemsched">时刻</label><input class="minput" id="svcemsched" maxlength="60" placeholder="如 02:00 · 每日"></div>
+    <div class="mrow"><label>Type</label><span class="segs" id="svcemtypes"></span></div>
+    <div class="mrow"><label for="svcemsched">Sched</label><input class="minput" id="svcemsched" maxlength="60" placeholder="e.g. 02:00 · daily"></div>
     <div class="mfoot">
-      <button class="mbtn danger" id="svcemdel" type="button">✕ 删除此边</button>
+      <button class="mbtn danger" id="svcemdel" type="button">✕ delete edge</button>
       <span class="mspacer"></span>
-      <button class="mbtn" id="svcemcancel" type="button">取消</button>
-      <button class="mbtn primary" id="svcemok" type="button">保存</button>
+      <button class="mbtn" id="svcemcancel" type="button">Cancel</button>
+      <button class="mbtn primary" id="svcemok" type="button">Save</button>
     </div>
   </div>
 </div>
 <div class="modal" id="svcmedit" hidden>
   <div class="mback" data-close="1"></div>
   <div class="mbox wide" role="dialog" aria-modal="true" aria-label="mermaid 导出">
-    <div class="mtitle">mermaid <span class="msub">· 最新状态（含编辑）· 可直接用于 mmd2html</span></div>
+    <div class="mtitle">mermaid <span class="msub">· current state (incl. edits) · paste into mmd2html</span></div>
     <pre class="mmd" id="svcmeditcode"></pre>
     <div class="mfoot">
       <button class="mbtn" id="svcmeditrelayout" type="button">⟲ relayout</button>
-      <button class="mbtn" id="svcmeditreset" type="button">↺ 恢复默认数据</button>
+      <button class="mbtn" id="svcmeditreset" type="button">↺ reset data</button>
       <span class="mspacer"></span>
-      <button class="mbtn primary" id="svcmeditcopy" type="button">复制</button>
-      <button class="mbtn" data-close="1" type="button">关闭</button>
+      <button class="mbtn primary" id="svcmeditcopy" type="button">copy</button>
+      <button class="mbtn" data-close="1" type="button">close</button>
     </div>
   </div>
 </div>
@@ -263,7 +259,6 @@ var elistEl=document.getElementById('svcelist');
 var emore=document.getElementById('svcemore');
 elistEl.addEventListener('scroll',function(){updateEmore()},{passive:true});
 var inspEl=document.getElementById('svcinsp');
-var alogEl=document.getElementById('svcalog');
 var chipsEl=document.getElementById('svcchips');
 var viewEl=document.getElementById('svcview');
 var SVGNS='http://www.w3.org/2000/svg';
@@ -272,10 +267,10 @@ var RM=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 /*==DATA==*//* 本块整体替换：ARCH_TITLE / ARCH_LSKEY / COLS / SERVERS / EDGES */
 var ARCH_TITLE='SERVICE ARCH';
 var ARCH_LSKEY='arch-sample';
-var TYPE={sync:{c:'#3ecf8e',dash:'10 4',dur:'1.5s',label:'同步'},
- call:{c:'#58a6ff',dash:'6 5',dur:'1.1s',label:'调用'},
- job :{c:'#f0a942',dash:'2 4',dur:'0.85s',label:'定时'},
- data:{c:'#b18cff',dash:'14 5',dur:'1.9s',label:'读取'}};
+var TYPE={sync:{c:'#3ecf8e',dash:'10 4',dur:'1.5s',label:'sync'},
+ call:{c:'#58a6ff',dash:'6 5',dur:'1.1s',label:'call'},
+ job :{c:'#f0a942',dash:'2 4',dur:'0.85s',label:'job'},
+ data:{c:'#b18cff',dash:'14 5',dur:'1.9s',label:'data'}};
 var COLS=[['web'],['app'],['data','ops']];
 var SERVERS=[
  {id:'web',short:'Web',name:'Web 边缘',meta:'双活 · LAN',ac:'#58a6ff',svc:[
@@ -423,8 +418,6 @@ function toggle(id){
   mode='custom';pinnedKey=null;renderInspector(null);
   applyState();
   var moved=EDGES.filter(function(e){return inSub(e.from,id)||inSub(e.to,id)}).length;
-  logLine((closing?'<span style="color:var(--orange)">▾ collapse</span> ':'<span style="color:var(--teal)">▸ expand</span> ')
-    +shortPath(id)+' · '+moved+' 边'+(closing?'上浮至父级':'下沉回叶子'));
   saveState();
 }
 function setView(v){
@@ -434,7 +427,6 @@ function setView(v){
   mode=v;pinnedKey=null;renderInspector(null);
   applyState();
   var up=EDGES.filter(function(e){return resolve(e.from)!==e.from||resolve(e.to)!==e.to}).length;
-  logLine('<span style="color:var(--purple)">▸ view</span> '+v+' · '+up+' 边改为粗粒度锚定');
   saveState();
 }
 function shortPath(id){
@@ -709,7 +701,7 @@ function renderNodeInspector(rid){
   var rel=WIRES.filter(function(w){return inSub(w.g.s,rid)||inSub(w.g.t,rid)});
   if(!rel.length)return;
   var h=el('div','ihead');
-  h.innerHTML='节点 '+NODE[rid].short+' · 关联 '+rel.length+' 条边';
+  h.innerHTML=NODE[rid].short+' · '+rel.length+' wires';
   inspEl.innerHTML='';inspEl.appendChild(h);
   rel.forEach(function(w){
     var t=TYPE[w.g.type];
@@ -718,7 +710,7 @@ function renderNodeInspector(rid){
     inspEl.appendChild(r);
   });
   var note=el('div','inote');
-  note.textContent='hover / click 具体连线可看最小颗粒明细';
+  note.textContent='hover / click a wire for leaf-level detail';
   inspEl.appendChild(note);
 }
 function applyPinStyles(){
@@ -730,10 +722,10 @@ function applyPinStyles(){
   });
 }
 function renderInspector(key,quiet){
-  if(!key){inspEl.innerHTML='hover 边或列表行 · click 固定明细';return}
+  if(!key){inspEl.innerHTML='hover a wire or row · click to pin';return}
   var w=null;
   for(var i=0;i<WIRES.length;i++)if(WIRES[i].key===key){w=WIRES[i];break}
-  if(!w){if(!quiet)inspEl.innerHTML='（该边已随收合变化 · 重新 hover）';return}
+  if(!w){if(!quiet)inspEl.innerHTML='(edge moved by collapse · hover again)';return}
   var g=w.g,t=TYPE[g.type];
   var h=el('div','ihead');
   h.innerHTML='<span style="color:'+t.c+'">■</span> '+NODE[g.s].short+' ▶ '+NODE[g.t].short+' · '+t.label+' ×'+g.leaves.length;
@@ -744,20 +736,13 @@ function renderInspector(key,quiet){
     inspEl.appendChild(r);
   });
   var note=el('div','inote');
-  note.textContent='当前锚定 '+NODE[g.s].short+' ▶ '+NODE[g.t].short+'（收合上浮后的粒度）';
+  note.textContent='anchored at '+NODE[g.s].short+' ▶ '+NODE[g.t].short+' (float-up granularity)';
   inspEl.appendChild(note);
   if(pinnedKey===key){
     var c=el('button','iclear cursor-interaction');c.type='button';c.textContent='✕ 取消固定';
     c.addEventListener('click',function(ev){ev.stopPropagation();pinnedKey=null;applyPinStyles();renderInspector(null)});
     inspEl.appendChild(c);
   }
-}
-function logLine(html){
-  var d=el('div','al');
-  var ts=new Date().toTimeString().slice(0,8);
-  d.innerHTML='<span style="color:var(--faint)">'+ts+'</span> '+html;
-  alogEl.insertBefore(d,alogEl.firstChild);
-  while(alogEl.children.length>9)alogEl.removeChild(alogEl.lastChild);
 }
 
 /* ── 事件 ─────────────────────────────────────────────────── */
@@ -859,7 +844,6 @@ function relayout(){
   defaultLayout();
   applyPos();
   rebuild();
-  logLine('<span style="color:var(--teal)">⟲ relayout</span> · 服务器已复位到默认网格');
   saveState();
 }
 
@@ -970,9 +954,9 @@ function edgeCountIn(path){
   return DATA.edges.filter(function(e){return inSub(e.from,path)||inSub(e.to,path)}).length;
 }
 function delLabel(path){
-  var rec=findRec(path);if(!rec)return '✕ 删除';
+  var rec=findRec(path);if(!rec)return '✕ delete';
   var kids=(!rec.svc)?((rec.srv.svc||[]).length):(rec.svc&&!rec.sub)?((rec.svc.subs||[]).length):0;
-  return '✕ 删除（含 '+kids+' 下属 · '+edgeCountIn(path)+' 边）';
+  return '✕ delete ('+kids+' children · '+edgeCountIn(path)+' edges)';
 }
 function showModal(id){$(id).hidden=false}
 function hideModal(id){$(id).hidden=true}
@@ -1004,7 +988,7 @@ function openNodeEditor(path){
   var rec=findRec(path);if(!rec)return;
   editing={path:path,rec:rec};delArmed=false;
   var node=rec.sub||rec.svc||rec.srv;
-  $('svcmtitle').textContent='编辑 · '+NODE[path].label;
+  $('svcmtitle').textContent='edit · '+NODE[path].label;
   $('svcmname').value=node.name||'';
   $('svcmmeta').value=node.meta||'';
   $('svcmaddrow').hidden=!!rec.sub;
@@ -1019,7 +1003,7 @@ function afterDataChange(){
   var mx=0;Object.keys(POS).forEach(function(k){var p=POS[k];if(p)mx=Math.max(mx,p.x+p.w)});
   SERVERS.forEach(function(s){if(!POS[s.id])POS[s.id]={x:mx+40,y:10,w:240}});
   buildIndex();buildDOM();defaultLayout();applyPos();applyState();
-  $('svcsummary').textContent=SERVERS.length+' 台服务器、'+SVC_COUNT+' 个服务、'+SUB_COUNT+' 个子服务、'+EDGES.length+' 条调度关系。调度边锚定最小颗粒；收合节点时边上浮到父节点。';
+  $('svcsummary').textContent=SERVERS.length+' servers · '+SVC_COUNT+' services · '+SUB_COUNT+' subservices · '+EDGES.length+' edges. edges anchor at the finest granularity; collapse floats them up.';
   saveState();
 }
 function slugId(nm){var s=String(nm).toLowerCase().replace(/[^a-z0-9]+/g,'');return s?s.slice(0,12):''}
@@ -1033,7 +1017,6 @@ $('svcmok').addEventListener('click',function(){
   rec.srv.ac=act?act.style.background:$('svcmcolor').value;
   var p=editing.path;
   afterDataChange();hideModal('svcmodal');
-  logLine('<span style="color:var(--teal)">✎ edit</span> '+shortPath(p)+' 已更新');
 });
 $('svcmcancel').addEventListener('click',function(){hideModal('svcmodal')});
 $('svcmaddbtn').addEventListener('click',function(){
@@ -1052,12 +1035,11 @@ $('svcmaddbtn').addEventListener('click',function(){
     rec.svc.subs.push({id:id,short:nm,name:nm,meta:mt});
   }else return;
   afterDataChange();hideModal('svcmodal');
-  logLine('<span style="color:var(--green)">＋ add</span> '+shortPath(rec.srv.id+(rec.svc?'.'+rec.svc.id:'')+'.'+id));
 });
 $('svcmdel').addEventListener('click',function(){
   if(!editing)return;
   if(!delArmed){
-    delArmed=true;$('svcmdel').textContent='⚠ 再点一次确认删除';
+    delArmed=true;$('svcmdel').textContent='⚠ click again to confirm';
     setTimeout(function(){delArmed=false;var b=$('svcmdel');if(editing&&b)b.textContent=delLabel(editing.path)},2600);
     return;
   }
@@ -1079,7 +1061,6 @@ $('svcmdel').addEventListener('click',function(){
   var lbl=shortPath(path);
   hideModal('svcmodal');editing=null;
   afterDataChange();
-  logLine('<span style="color:#ff8a9b">✕ del</span> '+lbl+' 及其调度边');
 });
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function hlMermaid(src){
@@ -1143,7 +1124,7 @@ function fallbackCopy(txt){
 }
 $('svcmeditcopy').addEventListener('click',function(){
   var txt=mmSource(),b=$('svcmeditcopy');
-  var done=function(){b.textContent='✓ 已复制';setTimeout(function(){b.textContent='复制'},1500)};
+  var done=function(){b.textContent='✓ copied';setTimeout(function(){b.textContent='copy'},1500)};
   if(navigator.clipboard&&navigator.clipboard.writeText){
     navigator.clipboard.writeText(txt).then(done,function(){fallbackCopy(txt);done()});
   }else{fallbackCopy(txt);done()}
@@ -1163,7 +1144,7 @@ function openEdgeEditor(key){
   var leaves=w.g.leaves.map(function(e){return {e:e,idx:DATA.edges.indexOf(e)}}).filter(function(x){return x.idx>=0});
   if(!leaves.length)return;
   edgeEdit={leaves:leaves,sel:0};
-  $('svcemtitle').textContent='编辑 · '+shortPath(w.g.s)+' ▶ '+shortPath(w.g.t);
+  $('svcemtitle').textContent='edit · '+shortPath(w.g.s)+' ▶ '+shortPath(w.g.t);
   var list=$('svcemlist');
   list.innerHTML='';
   list.hidden=leaves.length<2;
@@ -1204,7 +1185,6 @@ $('svcemok').addEventListener('click',function(){
   x.e.sched=($('svcemsched').value||'').trim();
   var a=shortPath(x.e.from),b2=shortPath(x.e.to);
   afterDataChange();hideModal('svcedgemodal');edgeEdit=null;
-  logLine('<span style="color:var(--teal)">✎ edge</span> '+a+' ▶ '+b2+' 已更新');
 });
 $('svcemcancel').addEventListener('click',function(){hideModal('svcedgemodal');edgeEdit=null});
 $('svcemdel').addEventListener('click',function(){
@@ -1212,7 +1192,6 @@ $('svcemdel').addEventListener('click',function(){
   var x=edgeEdit.leaves[edgeEdit.sel];
   DATA.edges.splice(x.idx,1);
   afterDataChange();hideModal('svcedgemodal');edgeEdit=null;
-  logLine('<span style="color:#ff8a9b">✕ edge</span> 已删除 1 条调度边');
 });
 
 /* ── 启动 ─────────────────────────────────────────────────── */
@@ -1227,11 +1206,10 @@ function setViewSilent(v){
 if(!DATA){DATA={title:ARCH_TITLE,cols:JSON.parse(JSON.stringify(COLS)),servers:JSON.parse(JSON.stringify(SERVERS)),edges:JSON.parse(JSON.stringify(EDGES))};SERVERS=DATA.servers;EDGES=DATA.edges;COLS=DATA.cols}
 buildIndex();buildDOM();
 document.getElementById('svctitle').textContent=ARCH_TITLE;
-document.getElementById('svcsummary').textContent=SERVERS.length+' 台服务器、'+SVC_COUNT+' 个服务、'+SUB_COUNT+' 个子服务、'+EDGES.length+' 条调度关系。调度边锚定最小颗粒；收合节点时边上浮到父节点。';
+document.getElementById('svcsummary').textContent=SERVERS.length+' servers · '+SVC_COUNT+' services · '+SUB_COUNT+' subservices · '+EDGES.length+' edges. edges anchor at the finest granularity; collapse floats them up.';
 defaultLayout();
 applyPos();
 applyState();
-logLine('<span style="color:var(--teal)">boot</span> · '+SERVERS.length+' srv / '+SVC_COUNT+' svc / '+SUB_COUNT+' sub / '+EDGES.length+' edges loaded');
 })();
 </script>
 </div>
