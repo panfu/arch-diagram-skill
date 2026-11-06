@@ -44,7 +44,7 @@ cursor:grab;touch-action:none;opacity:0;pointer-events:none;transition:opacity .
 #svcarch .server.dragging .grip{opacity:1;pointer-events:auto;cursor:grabbing;color:var(--ac);transition:opacity .1s 0s}
 
 #svcarch .main{display:flex;gap:14px;margin-top:12px;align-items:stretch;flex:1;min-height:0}
-#svcarch .graph-wrap{flex:1;min-width:0;overflow-x:auto;overflow-y:auto;padding:2px;display:flex;align-items:flex-start;border-radius:10px;
+#svcarch .graph-wrap{flex:1;min-width:0;overflow-x:auto;overflow-y:auto;padding:2px;display:flex;align-items:flex-start;border-radius:10px;position:relative;
 background-image:radial-gradient(#161d2c 1px,transparent 1px);background-size:22px 22px;background-color:#0c101b}
 #svcarch .graph-wrap{scrollbar-color:#2a3448 transparent}
 #svcarch .graph-wrap::-webkit-scrollbar{height:10px}
@@ -54,7 +54,12 @@ background-image:radial-gradient(#161d2c 1px,transparent 1px);background-size:22
 #svcarch .mbox,#svcarch .mmd{scrollbar-color:#2a3448 transparent}
 #svcarch .mbox::-webkit-scrollbar,#svcarch .mmd::-webkit-scrollbar{width:8px;height:8px}
 #svcarch .mbox::-webkit-scrollbar-thumb,#svcarch .mmd::-webkit-scrollbar-thumb{background:#2a3448;border-radius:4px}
-#svcarch .graph{position:relative;min-width:940px;flex:0 0 auto;align-self:stretch;box-sizing:border-box;padding:24px 26px 28px 10px}
+#svcarch .graph{position:relative;min-width:940px;flex:0 0 auto;align-self:stretch;box-sizing:border-box;padding:24px 26px 28px 10px;transform-origin:0 0}
+#svcarch.ctrl-on .graph-wrap{cursor:grab}
+#svcarch.ctrl-on .graph-wrap.panning{cursor:grabbing}
+#svcarch .zoomchip{position:absolute;right:12px;bottom:12px;padding:2px 10px;border:1px solid #2a3448;border-radius:999px;
+color:var(--dim);font-size:10.5px;background:#0e1320;z-index:5}
+#svcarch .zoomchip:hover{color:var(--ink);border-color:#3a4a6b}
 #svcarch .cols{position:relative;z-index:2;pointer-events:none}
 
 #svcarch .cols .server{pointer-events:auto}
@@ -202,6 +207,7 @@ background:linear-gradient(180deg,rgba(14,19,32,0),#0e1320 60%);opacity:0;transi
           <svg class="wires" id="svcwires"></svg>
           <svg class="wires-top" id="svcwirestop"></svg>
         </div>
+        <div class="zoomchip cursor-interaction" id="svczoom">100%</div>
       </div>
       <aside class="rail">
         <div class="panel"><span class="ptab">edges</span><div class="elist" id="svcelist" aria-live="polite"></div><div class="emore" id="svcemore" aria-hidden="true">▾</div></div>
@@ -499,7 +505,7 @@ function canvasSize(){
 function topOf(id){var n=NODE[id];while(n&&n.kind!=='server')n=NODE[n.parent];return n?n.id:null}
 function rel(elm){
   var r=elm.getBoundingClientRect(),g=graph.getBoundingClientRect();
-  return {x:r.left-g.left,y:r.top-g.top,w:r.width,h:r.height};
+  return {x:(r.left-g.left)/ZOOM,y:(r.top-g.top)/ZOOM,w:r.width/ZOOM,h:r.height/ZOOM};
 }
 function mk(tag){return document.createElementNS(SVGNS,tag)}
 function rebuild(light){
@@ -527,10 +533,10 @@ function rebuild(light){
 }
 function drawWires(groups){
   svg.innerHTML='';svgHit.innerHTML='';svgTop.innerHTML='';
-  var gr=graph.getBoundingClientRect();
-  svg.setAttribute('width',Math.ceil(gr.width));svg.setAttribute('height',Math.ceil(gr.height));
-  svgHit.setAttribute('width',Math.ceil(gr.width));svgHit.setAttribute('height',Math.ceil(gr.height));
-  svgTop.setAttribute('width',Math.ceil(gr.width));svgTop.setAttribute('height',Math.ceil(gr.height));
+  var gw=graph.offsetWidth,gh=graph.offsetHeight;
+  svg.setAttribute('width',gw);svg.setAttribute('height',gh);
+  svgHit.setAttribute('width',gw);svgHit.setAttribute('height',gh);
+  svgTop.setAttribute('width',gw);svgTop.setAttribute('height',gh);
   var defs=mk('defs');
   Object.keys(TYPE).forEach(function(ty){
     var m=mk('marker');m.setAttribute('id','ah-'+ty);
@@ -789,8 +795,8 @@ colsEl.addEventListener('pointerdown',function(ev){
 });
 window.addEventListener('pointermove',function(ev){
   if(!drag)return;
-  var dx=ev.clientX-drag.sx,dy=ev.clientY-drag.sy;
-  if(!drag.moved&&Math.abs(dx)+Math.abs(dy)>4)drag.moved=true;
+  var dx=(ev.clientX-drag.sx)/ZOOM,dy=(ev.clientY-drag.sy)/ZOOM;
+  if(!drag.moved&&Math.abs(ev.clientX-drag.sx)+Math.abs(ev.clientY-drag.sy)>4)drag.moved=true;
   if(!drag.moved)return;
   var p=POS[drag.sid];
   if(drag.mode==='w')p.w=Math.max(190,Math.min(460,drag.ow+dx));
@@ -903,7 +909,7 @@ if(!RM){
 
 /* ── 状态记忆（localStorage + 会话 widgetState 双写） ─────── */
 var saveT=null,LSKEY=ARCH_LSKEY;
-function snapshotState(){return {collapsed:Array.from(collapsed),mode:mode,pos:POS,data:DATA}}
+function snapshotState(){return {collapsed:Array.from(collapsed),mode:mode,pos:POS,data:DATA,z:ZOOM,px:PANX,py:PANY}}
 function saveState(){
   clearTimeout(saveT);
   saveT=setTimeout(function(){
@@ -924,6 +930,9 @@ function loadState(){
   var st=null;
   try{var v=localStorage.getItem(LSKEY);if(v)st=JSON.parse(v)}catch(e){}
   if(!st&&window.zcode&&window.zcode.widgetState)st=window.zcode.widgetState.privateContent;
+  if(st&&isFinite(st.z)&&st.z>0){ZOOM=Math.max(0.4,Math.min(2.5,+st.z))}
+  if(st&&isFinite(st.px))PANX=+st.px;
+  if(st&&isFinite(st.py))PANY=+st.py;
   if(st&&st.data&&Array.isArray(st.data.servers)&&st.data.servers.length){
     DATA=st.data;SERVERS=DATA.servers;EDGES=DATA.edges||[];
     if(DATA.cols&&DATA.cols.length)COLS=DATA.cols;
@@ -1210,6 +1219,57 @@ $('svcemdel').addEventListener('click',function(){
   afterDataChange();hideModal('svcedgemodal');edgeEdit=null;
 });
 
+/* ── 画布缩放（ctrl+滚轮）与平移（ctrl+拖拽） ─────────────── */
+var ZOOM=1,PANX=0,PANY=0;
+var wrapEl=graph.parentNode;
+function setZoomUI(){$('svczoom').textContent=Math.round(ZOOM*100)+'%'}
+function applyView(){
+  clampPan();
+  graph.style.transform='translate('+PANX+'px,'+PANY+'px) scale('+ZOOM+')';
+  setZoomUI();
+}
+function clampPan(){
+  var w=wrapEl.clientWidth,h=wrapEl.clientHeight,cw=graph.offsetWidth*ZOOM,ch=graph.offsetHeight*ZOOM,m=160;
+  PANX=Math.max(Math.min(0,w-cw)-m,Math.min(m,PANX));
+  PANY=Math.max(Math.min(0,h-ch)-m,Math.min(m,PANY));
+}
+function zoomAt(cx,cy,factor){
+  var r=wrapEl.getBoundingClientRect();
+  var sx=cx-r.left,sy=cy-r.top;
+  var nz=Math.max(0.4,Math.min(2.5,ZOOM*factor));
+  if(nz===ZOOM)return;
+  var k=nz/ZOOM;
+  PANX=sx-(sx-PANX)*k;PANY=sy-(sy-PANY)*k;
+  ZOOM=nz;applyView();saveState();
+}
+wrapEl.addEventListener('wheel',function(ev){
+  if(!(ev.ctrlKey||ev.metaKey))return;
+  ev.preventDefault();
+  zoomAt(ev.clientX,ev.clientY,ev.deltaY<0?1.1:1/1.1);
+},{passive:false});
+var panDrag=null;
+wrapEl.addEventListener('pointerdown',function(ev){
+  if(!ev.ctrlKey)return;
+  if(ev.target.closest&&ev.target.closest('.zoomchip'))return;
+  ev.preventDefault();ev.stopPropagation();
+  panDrag={sx:ev.clientX,sy:ev.clientY,px:PANX,py:PANY};
+  wrapEl.classList.add('panning');
+  try{wrapEl.setPointerCapture(ev.pointerId)}catch(e){}
+},true);
+window.addEventListener('pointermove',function(ev){
+  if(!panDrag)return;
+  PANX=panDrag.px+(ev.clientX-panDrag.sx);
+  PANY=panDrag.py+(ev.clientY-panDrag.sy);
+  applyView();
+});
+window.addEventListener('pointerup',function(){
+  if(panDrag){panDrag=null;wrapEl.classList.remove('panning');saveState()}
+});
+wrapEl.addEventListener('contextmenu',function(ev){if(ev.ctrlKey)ev.preventDefault()});
+$('svczoom').addEventListener('click',function(){ZOOM=1;PANX=0;PANY=0;applyView();saveState()});
+window.addEventListener('keydown',function(ev){if(ev.key==='Control')root.classList.add('ctrl-on')});
+window.addEventListener('keyup',function(ev){if(ev.key==='Control')root.classList.remove('ctrl-on')});
+
 /* ── 启动 ─────────────────────────────────────────────────── */
 if(!loadState()){setViewSilent('services')}
 function setViewSilent(v){
@@ -1225,6 +1285,7 @@ document.getElementById('svctitle').textContent=ARCH_TITLE;
 document.getElementById('svcsummary').textContent=SERVERS.length+' servers · '+SVC_COUNT+' services · '+SUB_COUNT+' subservices · '+EDGES.length+' edges. edges anchor at the finest granularity; collapse floats them up.';
 defaultLayout();
 applyPos();
+applyView();
 applyState();
 })();
 </script>
