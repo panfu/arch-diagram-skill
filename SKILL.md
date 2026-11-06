@@ -90,7 +90,7 @@ var EDGES=[
 <!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{ARCH_TITLE}</title>
-<style>body{margin:12px;background:#080b12}</style></head><body>
+<style>html,body{margin:0;padding:0;background:#080b12}#svcarch{min-height:100vh}</style></head><body>
 {fragment}</body></html>
 ```
 

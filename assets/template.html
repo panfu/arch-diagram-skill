@@ -9,11 +9,9 @@ color:var(--ink);font-weight:400;-webkit-font-smoothing:antialiased;user-select:
 #svcarch .cursor-interaction{cursor:pointer}
 #svcarch .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 
-#svcarch .term{background:var(--tbg);border:1px solid #1d2434;border-radius:10px;overflow:hidden;
-box-shadow:0 14px 40px rgba(0,0,0,.45);display:flex;flex-direction:column;min-height:calc(100vh - 24px)}
+#svcarch .term{background:var(--tbg);border:0;border-radius:0;overflow:hidden;
+display:flex;flex-direction:column;min-height:100vh}
 #svcarch .tbar{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#0a0e17;border-bottom:1px solid #1a2130}
-#svcarch .lt{width:12px;height:12px;border-radius:50%}
-#svcarch .lt.r{background:#ff5f57}#svcarch .lt.y{background:#febc2e}#svcarch .lt.g{background:#28c840}
 #svcarch .ttitle{flex:1;text-align:center;color:var(--faint);font-size:11px}
 #svcarch .tbody{padding:16px 18px 14px;flex:1;display:flex;flex-direction:column}
 
@@ -168,7 +166,6 @@ background:linear-gradient(180deg,rgba(14,19,32,0),#0e1320 60%);opacity:0;transi
 <p class="sr-only" id="svcsummary"></p>
 <div class="term">
   <div class="tbar">
-    <span class="lt r"></span><span class="lt y"></span><span class="lt g"></span>
     <span class="ttitle" id="svctitle">AR SERVICE ARCH</span>
   </div>
   <div class="tbody">
