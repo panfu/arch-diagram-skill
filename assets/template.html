@@ -758,6 +758,7 @@ function renderInspector(key,quiet){
 /* ── 事件 ─────────────────────────────────────────────────── */
 colsEl.addEventListener('click',function(ev){
   if(justDragged){justDragged=false;return}
+  if(panMoved){panMoved=false;return}
   if(ev.altKey||ev.ctrlKey){
     var e=ev.target.closest('.srv-head,.svc-head,.sub');
     if(e&&e.dataset.node&&!ev.target.closest('.grip')&&!ev.target.closest('.rsz')){openNodeEditor(e.dataset.node);return}
@@ -840,6 +841,7 @@ svgHit.addEventListener('mouseout',function(ev){
   if(ev.target.classList&&ev.target.classList.contains('hit'))clearHot();
 });
 svgHit.addEventListener('click',function(ev){
+  if(panMoved){panMoved=false;return}
   if(ev.target.classList&&ev.target.classList.contains('hit')){
     var k=ev.target.getAttribute('data-key');
     if(ev.altKey||ev.ctrlKey){openEdgeEditor(k);return}
@@ -1239,23 +1241,28 @@ wrapEl.addEventListener('wheel',function(ev){
   ev.preventDefault();
   zoomAt(ev.clientX,ev.clientY,ev.deltaY<0?1.1:1/1.1);
 },{passive:false});
-var panDrag=null;
+var panDrag=null,panMoved=false;
 wrapEl.addEventListener('pointerdown',function(ev){
+  panMoved=false;
   if(!ev.ctrlKey&&!ev.altKey)return;
   if(ev.target.closest&&ev.target.closest('.zoomchip'))return;
   ev.preventDefault();ev.stopPropagation();
-  panDrag={sx:ev.clientX,sy:ev.clientY,px:PANX,py:PANY};
+  panDrag={sx:ev.clientX,sy:ev.clientY,px:PANX,py:PANY,moved:false};
   wrapEl.classList.add('panning');
-  try{wrapEl.setPointerCapture(ev.pointerId)}catch(e){}
 },true);
 window.addEventListener('pointermove',function(ev){
   if(!panDrag)return;
-  PANX=panDrag.px+(ev.clientX-panDrag.sx);
-  PANY=panDrag.py+(ev.clientY-panDrag.sy);
+  var dx=ev.clientX-panDrag.sx,dy=ev.clientY-panDrag.sy;
+  if(!panDrag.moved&&Math.abs(dx)+Math.abs(dy)>3)panDrag.moved=true;
+  if(!panDrag.moved)return;
+  PANX=panDrag.px+dx;PANY=panDrag.py+dy;
   applyView();
 });
 window.addEventListener('pointerup',function(){
-  if(panDrag){panDrag=null;wrapEl.classList.remove('panning');saveState()}
+  if(panDrag){
+    if(panDrag.moved){panMoved=true;saveState()}
+    panDrag=null;wrapEl.classList.remove('panning');
+  }
 });
 wrapEl.addEventListener('contextmenu',function(ev){if(ev.ctrlKey||ev.altKey)ev.preventDefault()});
 $('svczoom').addEventListener('click',function(){ZOOM=1;PANX=0;PANY=0;applyView();saveState()});
